@@ -22,7 +22,13 @@ python -m venv .venv && source .venv/bin/activate
 pip install -e .
 ```
 
-Five dependencies: `mujoco`, `numpy`, `pillow`, `imageio`, `onnxruntime`.
+Five dependencies: `mujoco`, `numpy`, `pillow`, `imageio`, `onnxruntime` (15 packages
+in total, all permissive). Pinned in `requirements.txt`; fully locked in
+`requirements-lock.txt`.
+
+**No Python yet, or no internet on the target machine?**
+[`docs/INSTALL.md`](docs/INSTALL.md) covers installing Python 3.11 on Windows, macOS
+and Linux, and an offline install from a USB stick.
 
 ## See something
 

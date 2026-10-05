@@ -1,0 +1,16 @@
+# Everything the simulator needs. Five packages; the rest are their dependencies.
+#
+#   pip install -r requirements.txt
+#
+# Pinned to the versions this repo was verified against (5/5 scenarios, all six
+# workspace examples). Python 3.11 or newer. All five are permissively licensed
+# (Apache-2.0 / BSD / MIT-CMU) - see THIRD-PARTY-NOTICES.md.
+#
+# For a byte-identical install, or to install with no network at all, use
+# requirements-lock.txt instead. See docs/INSTALL.md.
+
+mujoco==3.12.0        # physics + rendering. Exact pin: the model files are compiled against it.
+numpy==2.4.6          # arrays, everywhere
+pillow==12.3.0        # writes the PNGs and the animated WebPs
+imageio==2.38.0       # image IO wrapper used by the render scripts
+onnxruntime==1.30.0   # CPU inference for the Holosoma walking policy

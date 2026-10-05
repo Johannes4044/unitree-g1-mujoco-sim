@@ -1,0 +1,162 @@
+# Install from nothing
+
+You need exactly two things: **Python 3.11+** and **this repo**. No Docker, no CUDA,
+no compiler, no GPU. Everything is prebuilt wheels. Total download about 52 MB.
+
+---
+
+## 1. Install Python
+
+Check first — you may already have it:
+
+```
+python --version          # Windows
+python3 --version         # macOS / Linux
+```
+
+If that prints `3.11` or higher, skip to step 2.
+
+### Windows
+
+Download the installer from <https://www.python.org/downloads/> (3.11 or newer) and run it.
+
+**Tick "Add python.exe to PATH" on the first screen.** This is the one step people miss,
+and without it `python` won't be found in a new terminal.
+
+No admin rights? Choose "Customize installation" → "Install for me only". That works in
+a locked-down corporate account.
+
+If the Microsoft Store opens when you type `python`, Windows is showing a stub. Either
+install from python.org as above, or disable the stub under
+Settings → Apps → Advanced app settings → App execution aliases.
+
+### macOS
+
+```
+brew install python@3.11
+```
+
+No Homebrew? Use the python.org installer. Note: `onnxruntime` needs **macOS 14 or newer**.
+
+### Linux
+
+```
+sudo apt install python3.11 python3.11-venv python3-pip     # Debian / Ubuntu
+sudo dnf install python3.11                                  # Fedora / RHEL
+```
+
+The `-venv` package matters on Debian/Ubuntu — without it, step 2 fails.
+
+---
+
+## 2. Install the simulator
+
+```
+git clone https://github.com/Johannes4044/unitree-g1-mujoco-sim.git
+cd unitree-g1-mujoco-sim
+
+python -m venv .venv                 # on macOS/Linux: python3 -m venv .venv
+.venv\Scripts\activate               # Windows
+source .venv/bin/activate            # macOS / Linux
+
+pip install -r requirements.txt
+pip install -e .
+```
+
+The virtual environment keeps these 15 packages out of your system Python. You must
+activate it in each new terminal — you'll know it worked because the prompt is
+prefixed with `(.venv)`.
+
+`pip install -e .` installs *this repo* as the `g1` package, so `import g1.robot`
+works from any directory.
+
+### Check it worked
+
+```
+python scripts/check_scenarios.py
+```
+
+Expect `5/5 scenarios OK` after about a minute. Then:
+
+```
+python workspace/01_hello_sim.py
+```
+
+which writes a PNG into `workspace/out/`. If both work, you're done — go to
+[`workspace/README.md`](../workspace/README.md).
+
+---
+
+## 3. Offline install (no internet on the target machine)
+
+For an air-gapped or restricted laptop. Do the first part on any machine **with**
+internet, running the **same OS and Python version** as the target.
+
+**On the networked machine:**
+
+```
+pip download -r requirements-lock.txt -d wheels
+pip download hatchling editables -d wheels
+```
+
+The second line is easy to forget and the reason an offline install usually fails:
+`hatchling` and `editables` are needed to *build* this repo into an installable
+package, and pip only fetches them at build time. Without them the last step below
+dies with `No matching distribution found for editables~=0.3`.
+
+That fills `wheels/` with 21 `.whl` files, about 52 MB. Copy the **whole repo
+folder including `wheels/`** to the target machine — a USB stick, a share, whatever
+your transfer path is.
+
+**On the target machine:**
+
+```
+python -m venv .venv
+.venv\Scripts\activate                       # or: source .venv/bin/activate
+pip install --no-index --find-links wheels -r requirements-lock.txt
+pip install --no-index --find-links wheels -e .
+```
+
+`--no-index` forbids pip from reaching the network, so this fails loudly rather
+than silently phoning home. Use `requirements-lock.txt` here, not
+`requirements.txt` — the lock pins every transitive dependency, so the target gets
+exactly what you downloaded.
+
+If the target OS differs from the download machine, add the platform to the
+download step, e.g.:
+
+```
+pip download -r requirements-lock.txt -d wheels \
+  --platform win_amd64 --python-version 3.11 --only-binary :all:
+```
+
+---
+
+## Troubleshooting
+
+| Symptom | Cause and fix |
+|---|---|
+| `python: command not found` | Not on PATH. Reinstall ticking "Add to PATH", or use `py -3.11` on Windows. |
+| `No module named venv` | Debian/Ubuntu: `sudo apt install python3.11-venv`. |
+| `No module named g1` | `pip install -e .` not run, or the venv isn't activated. |
+| `onnxruntime` has no matching wheel | Python older than 3.11, or macOS older than 14. |
+| `ARB_clip_control unavailable...` on stderr | Harmless. A depth-precision notice from the renderer, not an error. |
+| Rendering fails on a headless Linux box | Needs an OpenGL context. Try `MUJOCO_GL=egl`, or `osmesa` for pure software. |
+| `pip` is very slow or blocked | Corporate proxy. Use the offline path in step 3. |
+| Offline: `No matching distribution found for editables` | You skipped `pip download hatchling editables -d wheels` on the networked machine. |
+
+---
+
+## What you are installing
+
+| Package | Licence | Why |
+|---|---|---|
+| `mujoco` | Apache-2.0 | physics and rendering |
+| `numpy` | BSD-3-Clause | arrays |
+| `pillow` | MIT-CMU | writes PNGs and WebPs |
+| `imageio` | BSD-2-Clause | image IO used by the render scripts |
+| `onnxruntime` | MIT | CPU inference for the Holosoma walking policy |
+
+Plus 10 transitive dependencies, all permissive. No copyleft, no proprietary
+components, nothing that needs a licence decision before you ship it. See
+[`THIRD-PARTY-NOTICES.md`](../THIRD-PARTY-NOTICES.md).

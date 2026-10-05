@@ -1,0 +1,42 @@
+# Fully resolved lock: these 15 packages and no others, with every transitive
+# dependency pinned. Identical on Windows, Linux and macOS (verified).
+#
+#   pip install -r requirements-lock.txt
+#
+# Generated with: uv pip compile requirements.txt --python-version 3.11
+absl-py==2.5.0
+    # via mujoco
+etils==1.14.0
+    # via mujoco
+flatbuffers==25.12.19
+    # via onnxruntime
+fsspec==2026.9.0
+    # via etils
+glfw==2.10.2
+    # via mujoco
+imageio==2.38.0
+    # via -r in.txt
+mujoco==3.12.0
+    # via -r in.txt
+numpy==2.4.6
+    # via
+    #   -r in.txt
+    #   imageio
+    #   mujoco
+    #   onnxruntime
+onnxruntime==1.30.0
+    # via -r in.txt
+packaging==26.3
+    # via onnxruntime
+pillow==12.3.0
+    # via
+    #   -r in.txt
+    #   imageio
+protobuf==7.36.2
+    # via onnxruntime
+pyopengl==3.1.10
+    # via mujoco
+typing-extensions==4.16.0
+    # via etils
+zipp==4.1.1
+    # via etils
