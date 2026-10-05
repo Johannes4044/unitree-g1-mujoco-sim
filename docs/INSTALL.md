@@ -32,11 +32,33 @@ Settings → Apps → Advanced app settings → App execution aliases.
 
 ### macOS
 
+**Requirements, both hard:** Apple Silicon (M1 or later) and macOS 14 (Sonoma) or newer.
+Check with `uname -m` (must print `arm64`) and `sw_vers -productVersion`.
+
+This is not a preference. `mujoco` 3.12.0 publishes only `macosx_11_0_arm64` wheels and
+`onnxruntime` 1.30.0 only `macosx_14_0_arm64` — there is **no Intel macOS wheel for either**,
+so an Intel Mac cannot install this at all, and macOS 13 or older fails on onnxruntime.
+
+**Recommended — `uv` installs Python for you, no Homebrew and no admin rights:**
+
+```
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+Restart your terminal, then skip to step 2 and use `uv sync`. On a managed laptop this is
+the path of least resistance: uv keeps its own Python under your home directory and never
+touches the system one.
+
+**With Homebrew, if you already have it:**
+
 ```
 brew install python@3.11
 ```
 
-No Homebrew? Use the python.org installer. Note: `onnxruntime` needs **macOS 14 or newer**.
+**Neither available** (e.g. `curl | sh` blocked by policy): download
+[python-3.11.9-macos11.pkg](https://www.python.org/ftp/python/3.11.9/python-3.11.9-macos11.pkg)
+and run it. 3.11.9 is the newest 3.11 with a macOS installer — later 3.11.x are
+source-only security releases.
 
 ### Linux
 
@@ -50,6 +72,23 @@ The `-venv` package matters on Debian/Ubuntu — without it, step 2 fails.
 ---
 
 ## 2. Install the simulator
+
+### With uv (one command does everything)
+
+```
+git clone https://github.com/Johannes4044/unitree-g1-mujoco-sim.git
+cd unitree-g1-mujoco-sim
+uv sync
+```
+
+That installs Python 3.11 if it is missing, creates `.venv`, and installs all 15
+packages. Prefix commands with `uv run` and you never have to activate anything:
+
+```
+uv run python scripts/check_scenarios.py
+```
+
+### With pip
 
 ```
 git clone https://github.com/Johannes4044/unitree-g1-mujoco-sim.git
@@ -139,7 +178,7 @@ pip download -r requirements-lock.txt -d wheels \
 | `python: command not found` | Not on PATH. Reinstall ticking "Add to PATH", or use `py -3.11` on Windows. |
 | `No module named venv` | Debian/Ubuntu: `sudo apt install python3.11-venv`. |
 | `No module named g1` | `pip install -e .` not run, or the venv isn't activated. |
-| `onnxruntime` has no matching wheel | Python older than 3.11, or macOS older than 14. |
+| `onnxruntime` has no matching wheel | Python older than 3.11, macOS older than 14, or an **Intel** Mac (arm64 wheels only). |
 | `ARB_clip_control unavailable...` on stderr | Harmless. A depth-precision notice from the renderer, not an error. |
 | Rendering fails on a headless Linux box | Needs an OpenGL context. Try `MUJOCO_GL=egl`, or `osmesa` for pure software. |
 | `pip` is very slow or blocked | Corporate proxy. Use the offline path in step 3. |
