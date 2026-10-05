@@ -2,6 +2,7 @@
 name = "g1"
 version = "0.1.0"
 description = "Unitree G1 MuJoCo simulator: scene, scenarios, robot sources and whole-body controllers"
+readme = "README.md"
 requires-python = ">=3.11"
 license = "Apache-2.0"
 license-files = ["LICENSE", "NOTICE"]
