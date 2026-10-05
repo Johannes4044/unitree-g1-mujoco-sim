@@ -1,0 +1,19 @@
+<mujoco model="tote">
+  <!-- Open-topped tote 400 x 600 x 120 mm from five thin slabs - the place-into target. Static,
+       like the tote in the original pick-and-place scene, so the runtime randomiser (free bodies
+       only) never moves the goal. Site "drop" marks the release point 0.22 m above the base.
+       Origin at the bottom centre. Self-authored primitive (CC0). -->
+  <asset>
+    <material name="mat" rgba="0.20 0.30 0.70 1"/>
+  </asset>
+  <worldbody>
+    <body name="tote">
+      <geom name="bottom" type="box" size="0.2 0.3 0.006" pos="0 0 0.006" material="mat" friction="0.9 0.02 0.0005" condim="4"/>
+      <geom name="wall_px" type="box" size="0.006 0.3 0.06" pos="0.194 0 0.06" material="mat" friction="0.9 0.02 0.0005" condim="4"/>
+      <geom name="wall_nx" type="box" size="0.006 0.3 0.06" pos="-0.194 0 0.06" material="mat" friction="0.9 0.02 0.0005" condim="4"/>
+      <geom name="wall_py" type="box" size="0.2 0.006 0.06" pos="0 0.294 0.06" material="mat" friction="0.9 0.02 0.0005" condim="4"/>
+      <geom name="wall_ny" type="box" size="0.2 0.006 0.06" pos="0 -0.294 0.06" material="mat" friction="0.9 0.02 0.0005" condim="4"/>
+      <site name="drop" size="0.01" pos="0 0 0.22" rgba="0 1 0 0.3"/>
+    </body>
+  </worldbody>
+</mujoco>

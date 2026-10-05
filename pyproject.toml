@@ -1,0 +1,35 @@
+[project]
+name = "g1"
+version = "0.1.0"
+description = "Unitree G1 MuJoCo simulator: scene, scenarios, robot sources and whole-body controllers"
+requires-python = ">=3.11"
+license = "Apache-2.0"
+license-files = ["LICENSE", "NOTICE"]
+# Permissive only (Apache-2.0 / MIT / BSD). Pinned as the main repository's `sim` extra pins:
+#   mujoco      Apache-2.0, exact pin - the model files are compiled against this version
+#   numpy       BSD-3-Clause
+#   pillow      MIT-CMU; bundles libwebp (BSD-3-Clause), which writes the rollout WebPs
+#   imageio     BSD-2-Clause; writes the PNGs through Pillow
+#   onnxruntime MIT; CPU inference of the Holosoma walking policy (src/g1/wbc/holosoma.py)
+# Deliberately absent: lerobot, torch, av, imageio-ffmpeg (its wheel is a GPL ffmpeg build),
+# fastapi, pyzmq - nothing here is a web service and there is no ffmpeg anywhere.
+dependencies = [
+  "mujoco==3.12.0",
+  "numpy>=1.26,<3",
+  "pillow>=10",
+  "imageio",
+  "onnxruntime>=1.18",
+]
+
+[project.optional-dependencies]
+dev = ["ruff>=0.5"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/g1"]
+
+[tool.ruff]
+line-length = 110

@@ -1,0 +1,16 @@
+<mujoco model="counter">
+  <!-- Kitchen counter 600 x 1600 mm, worktop at 0.90 m (domestic standard) over a closed
+       cabinet body. Surface geom is named "top" (see work_table.xml for the naming contract),
+       so a house scenario can use the counter as the pick surface.
+       Static. Origin at the floor, centre of the counter. Self-authored primitive (CC0). -->
+  <asset>
+    <material name="mat" rgba="0.88 0.86 0.82 1"/>
+    <material name="worktop_mat" rgba="0.30 0.30 0.33 1"/>
+  </asset>
+  <worldbody>
+    <body name="counter">
+      <geom name="top" type="box" size="0.30 0.80 0.02" pos="0 0 0.88" material="worktop_mat" friction="0.8 0.01 0.0002" condim="4"/>
+      <geom name="cabinet" type="box" size="0.29 0.79 0.43" pos="0 0 0.43" material="mat" friction="0.8 0.01 0.0002" condim="4"/>
+    </body>
+  </worldbody>
+</mujoco>

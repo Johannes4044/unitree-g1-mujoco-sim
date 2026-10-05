@@ -1,0 +1,21 @@
+<mujoco model="screwdriver">
+  <!-- Screwdriver lying flat: 100 mm shaft + 90 mm grip, 0.09 kg. The smallest graspable in the
+       library - use it to check the hand's minimum aperture.
+       The grip is a flat-sided box, not a cylinder: MuJoCo only applies rolling friction at
+       condim=6, so a perfectly round grip rolls across the table forever after the first contact
+       impulse - which is both wrong (real grips have flats) and a scene that never settles.
+       Origin at the bottom centre. Self-authored primitive (CC0). -->
+  <asset>
+    <material name="mat" rgba="0.85 0.25 0.15 1"/>
+    <material name="steel_mat" rgba="0.60 0.61 0.65 1"/>
+  </asset>
+  <worldbody>
+    <body name="screwdriver">
+      <freejoint/>
+      <geom name="grip" type="box" size="0.045 0.014 0.014" pos="-0.050 0 0.014" mass="0.05"
+            material="mat" condim="4" friction="1.0 0.02 0.0005" solimp="0.95 0.99 0.001" solref="0.008 1"/>
+      <geom name="shaft" type="cylinder" fromto="-0.005 0 0.014 0.095 0 0.014" size="0.004" mass="0.04"
+            material="steel_mat" condim="4" friction="0.7 0.01 0.0002" solimp="0.97 0.995 0.001" solref="0.006 1"/>
+    </body>
+  </worldbody>
+</mujoco>

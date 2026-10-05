@@ -1,0 +1,26 @@
+# Renders and rollouts written by scripts/ (SIM_OUT overrides the location)
+out/
+MUJOCO_LOG.TXT
+
+# models/scenarios/*.xml is build output of scripts/build_scenarios.py, but it IS committed
+# here on purpose: one `git clone` has to be enough on an offline machine. See the note in
+# that directory. Only seeded variants are transient.
+models/scenarios/*_s[0-9]*.xml
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+.ruff_cache/
+
+# Downloaded / cached ONNX policies. The one model this repo ships is committed, so it is
+# un-ignored below; anything else you drop in stays out of git.
+*.onnx
+!src/g1/wbc/models/holosoma/fastsac_g1_29dof.onnx
+
+.DS_Store

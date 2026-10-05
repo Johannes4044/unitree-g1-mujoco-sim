@@ -1,0 +1,15 @@
+<mujoco model="pallet">
+  <!-- Euro pallet 1200 x 800 x 144 mm, static. A 14 cm step for the feet and a base for stacked
+       crates. Origin at the floor, centre. Self-authored primitive (CC0). -->
+  <asset>
+    <material name="mat" rgba="0.66 0.53 0.34 1"/>
+  </asset>
+  <worldbody>
+    <body name="pallet">
+      <geom name="deck" type="box" size="0.60 0.40 0.011" pos="0 0 0.133" material="mat" friction="0.9 0.02 0.0005" condim="4"/>
+      <geom name="block0" type="box" size="0.06 0.40 0.061" pos="0.54 0 0.061" material="mat" condim="4"/>
+      <geom name="block1" type="box" size="0.06 0.40 0.061" pos="0 0 0.061" material="mat" condim="4"/>
+      <geom name="block2" type="box" size="0.06 0.40 0.061" pos="-0.54 0 0.061" material="mat" condim="4"/>
+    </body>
+  </worldbody>
+</mujoco>

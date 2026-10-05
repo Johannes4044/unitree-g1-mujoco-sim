@@ -1,0 +1,14 @@
+<mujoco model="cube">
+  <!-- 50 mm coloured cube, 0.12 kg (ABS-like density). The "pick the green cube" target.
+       Origin at the bottom centre. Self-authored primitive (CC0). -->
+  <asset>
+    <material name="mat" rgba="0.15 0.65 0.25 1"/>
+  </asset>
+  <worldbody>
+    <body name="cube">
+      <freejoint/>
+      <geom name="body" type="box" size="0.025 0.025 0.025" pos="0 0 0.025" mass="0.12"
+            material="mat" condim="4" friction="1.0 0.01 0.0002" solimp="0.95 0.99 0.001" solref="0.008 1"/>
+    </body>
+  </worldbody>
+</mujoco>

@@ -1,0 +1,20 @@
+<mujoco model="packing_bench">
+  <!-- Warehouse packing bench 900 x 1800 mm, surface at 0.75 m, with a lower shelf. Wider than
+       work_table, so the runtime randomiser has room to spread six objects at 8 cm spacing.
+       Surface geom is named "top" (see work_table.xml for the naming contract).
+       Static. Origin at the floor, centre of the bench. Self-authored primitive (CC0). -->
+  <asset>
+    <material name="mat" rgba="0.55 0.55 0.58 1"/>
+    <material name="deck_mat" rgba="0.70 0.58 0.42 1"/>
+  </asset>
+  <worldbody>
+    <body name="packing_bench">
+      <geom name="top" type="box" size="0.45 0.9 0.02" pos="0 0 0.73" material="deck_mat" friction="0.8 0.01 0.0002" condim="4"/>
+      <geom name="lower_shelf" type="box" size="0.42 0.86 0.015" pos="0 0 0.22" material="deck_mat" friction="0.8 0.01 0.0002" condim="4"/>
+      <geom name="leg0" type="box" size="0.03 0.03 0.365" pos="0.40 0.85 0.365" material="mat" contype="0" conaffinity="0"/>
+      <geom name="leg1" type="box" size="0.03 0.03 0.365" pos="0.40 -0.85 0.365" material="mat" contype="0" conaffinity="0"/>
+      <geom name="leg2" type="box" size="0.03 0.03 0.365" pos="-0.40 0.85 0.365" material="mat" contype="0" conaffinity="0"/>
+      <geom name="leg3" type="box" size="0.03 0.03 0.365" pos="-0.40 -0.85 0.365" material="mat" contype="0" conaffinity="0"/>
+    </body>
+  </worldbody>
+</mujoco>

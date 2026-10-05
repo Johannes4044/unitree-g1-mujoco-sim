@@ -1,0 +1,22 @@
+<mujoco model="shelf_unit">
+  <!-- Warehouse shelving bay 1000 x 400 x 1800 mm with four decks (0.10 / 0.55 / 1.00 / 1.45 m).
+       Decks and uprights collide, so crates can be placed on and taken off them. 12 geoms.
+       Static. Origin at the floor, centre of the bay footprint. Self-authored primitive (CC0). -->
+  <asset>
+    <material name="mat" rgba="0.30 0.42 0.55 1"/>
+    <material name="deck_mat" rgba="0.62 0.62 0.64 1"/>
+  </asset>
+  <worldbody>
+    <body name="shelf_unit">
+      <geom name="deck0" type="box" size="0.50 0.20 0.012" pos="0 0 0.10" material="deck_mat" friction="0.8 0.01 0.0002" condim="4"/>
+      <geom name="deck1" type="box" size="0.50 0.20 0.012" pos="0 0 0.55" material="deck_mat" friction="0.8 0.01 0.0002" condim="4"/>
+      <geom name="deck2" type="box" size="0.50 0.20 0.012" pos="0 0 1.00" material="deck_mat" friction="0.8 0.01 0.0002" condim="4"/>
+      <geom name="deck3" type="box" size="0.50 0.20 0.012" pos="0 0 1.45" material="deck_mat" friction="0.8 0.01 0.0002" condim="4"/>
+      <geom name="post0" type="box" size="0.03 0.03 0.90" pos="0.47 0.17 0.90" material="mat" condim="4"/>
+      <geom name="post1" type="box" size="0.03 0.03 0.90" pos="0.47 -0.17 0.90" material="mat" condim="4"/>
+      <geom name="post2" type="box" size="0.03 0.03 0.90" pos="-0.47 0.17 0.90" material="mat" condim="4"/>
+      <geom name="post3" type="box" size="0.03 0.03 0.90" pos="-0.47 -0.17 0.90" material="mat" condim="4"/>
+      <geom name="brace" type="box" size="0.50 0.02 0.03" pos="0 0.18 1.77" material="mat" condim="4"/>
+    </body>
+  </worldbody>
+</mujoco>

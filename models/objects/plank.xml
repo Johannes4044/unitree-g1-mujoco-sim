@@ -1,0 +1,14 @@
+<mujoco model="plank">
+  <!-- Timber plank 900 x 140 x 30 mm, 2.0 kg (pine). Low debris: a foot-height edge to step
+       over or onto. Origin at the bottom centre. Self-authored primitive (CC0). -->
+  <asset>
+    <material name="mat" rgba="0.68 0.55 0.35 1"/>
+  </asset>
+  <worldbody>
+    <body name="plank">
+      <freejoint/>
+      <geom name="body" type="box" size="0.45 0.07 0.015" pos="0 0 0.015" mass="2.0"
+            material="mat" condim="4" friction="0.85 0.02 0.0005" solimp="0.97 0.995 0.001" solref="0.006 1"/>
+    </body>
+  </worldbody>
+</mujoco>

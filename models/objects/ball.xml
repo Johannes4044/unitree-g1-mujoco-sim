@@ -1,0 +1,14 @@
+<mujoco model="ball">
+  <!-- 70 mm rubber ball, 0.15 kg. Rolls: the hard case for a grasp policy.
+       Origin at the bottom centre. Self-authored primitive (CC0). -->
+  <asset>
+    <material name="mat" rgba="0.95 0.85 0.1 1"/>
+  </asset>
+  <worldbody>
+    <body name="ball">
+      <freejoint/>
+      <geom name="body" type="sphere" size="0.035" pos="0 0 0.035" mass="0.15"
+            material="mat" condim="4" friction="1.0 0.02 0.0005" solimp="0.95 0.99 0.001" solref="0.008 1"/>
+    </body>
+  </worldbody>
+</mujoco>

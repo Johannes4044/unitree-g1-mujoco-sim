@@ -1,0 +1,14 @@
+<mujoco model="can">
+  <!-- 330 ml drinks can: r 33 mm, h 115 mm, 0.36 kg full. Aluminium-smooth, so lower friction
+       than the cardboard/plastic objects. Origin at the bottom centre. Self-authored (CC0). -->
+  <asset>
+    <material name="mat" rgba="0.15 0.35 0.85 1"/>
+  </asset>
+  <worldbody>
+    <body name="can">
+      <freejoint/>
+      <geom name="body" type="cylinder" size="0.033 0.0575" pos="0 0 0.0575" mass="0.36"
+            material="mat" condim="4" friction="0.7 0.01 0.0002" solimp="0.95 0.99 0.001" solref="0.008 1"/>
+    </body>
+  </worldbody>
+</mujoco>

@@ -1,0 +1,32 @@
+<scenario name="cluttered_bench">
+  <doc>
+    Grasping in clutter on a wide packing bench: eight small objects (cubes, a can, a bottle, and
+    three tools) within one arm's reach, plus a tote at the end of the bench. Distractors are
+    deliberately similar in size to the targets, so a language-conditioned policy has to use the
+    prompt and not just "grab the nearest thing". Colours come from a palette and half the
+    distractors are optional, so seeded variants differ. Not a locomotion scene: the robot stays
+    where it is.
+  </doc>
+
+  <part type="packing_bench" name="pick_table" pos="0.72 0 0"/>
+  <!-- The tote stands on its own table, clear of the pick surface (y 0.95..2.15 vs the bench's
+       -0.90..0.90): sim_randomise samples the whole pick surface, so a tote standing on it would
+       occasionally be handed the target object at episode start. -->
+  <part type="work_table"    name="pack_table" pos="0.72 1.55 0"/>
+  <part type="tote"          name="tote"       pos="0.72 1.55 0.75"/>
+
+  <!-- Two columns (x 0.45 / 0.75) by four rows (y -0.55 .. 0.55), kept close to the robot so the
+       whole set is inside the arm envelope with waist yaw. The spacing is set by the *jittered*
+       footprint of each object, not its nominal one: the two long tools alone reach 37 cm
+       together, which is why they are never in neighbouring rows of the same column. -->
+  <object type="hammer"      name="hammer"       pos="0.45 -0.55 0.75" yaw="0.4" jitter="0.04" yaw_jitter="1.0"/>
+  <object type="can"         name="blue_can"     pos="0.75 -0.55 0.75" palette="0.15 0.35 0.85 1|0.85 0.35 0.10 1|0.25 0.65 0.35 1" jitter="0.05"/>
+  <object type="cube"        name="green_cube"   pos="0.45 -0.18 0.75" rgba="0.15 0.65 0.25 1" jitter="0.05" yaw_jitter="3.14"/>
+  <object type="cube"        name="red_cube"     pos="0.75 -0.18 0.75" rgba="0.85 0.12 0.12 1" jitter="0.05" yaw_jitter="3.14"/>
+  <object type="screwdriver" name="screwdriver"  pos="0.45 0.18 0.75" yaw="1.2" jitter="0.04" yaw_jitter="1.0" optional="0.6"/>
+  <object type="cube"        name="blue_cube"    pos="0.75 0.18 0.75" rgba="0.15 0.30 0.85 1" jitter="0.05" yaw_jitter="3.14"/>
+  <object type="wrench"      name="wrench"       pos="0.45 0.55 0.75" yaw="-0.2" jitter="0.04" yaw_jitter="1.0" optional="0.6"/>
+  <object type="bottle"      name="water_bottle" pos="0.75 0.55 0.75" jitter="0.05" optional="0.7"/>
+
+  <camera name="third_person" pos="1.6 -1.5 1.5" target="0.7 0 0.85" fovy="50"/>
+</scenario>

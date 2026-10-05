@@ -1,0 +1,47 @@
+<scenario name="warehouse_aisle">
+  <doc>
+    Warehouse aisle: two runs of 1.8 m shelving forming a 2.8 m clear aisle, pallets and heavy
+    crates standing on the floor as obstacles, and a packing bench at the far end with the
+    pickable objects on it. Built for aisle navigation with the Mid-360 (long straight walls of
+    shelving are the classic degenerate case for LiDAR odometry), for depth-camera perception at
+    shelf height, and for the crate-handling task: `floor_crate` is a free 1.2 kg crate with
+    cut-out handles standing on the floor, which is the bimanual floor-pick the goal doc asks for.
+  </doc>
+
+  <floor rgba="0.38 0.38 0.40 1"/>
+
+  <wall name="back"  from="7.2 -4" to="7.2 4" height="4.0" thickness="0.2" rgba="0.55 0.56 0.58 1"/>
+  <wall name="left"  from="-2 4"   to="7.2 4" height="4.0" thickness="0.2" rgba="0.55 0.56 0.58 1"/>
+  <wall name="right" from="-2 -4"  to="7.2 -4" height="4.0" thickness="0.2" rgba="0.55 0.56 0.58 1"/>
+
+  <part type="shelf_unit" name="shelf_l0" pos="1.2 1.6 0"/>
+  <part type="shelf_unit" name="shelf_l1" pos="2.3 1.6 0"/>
+  <part type="shelf_unit" name="shelf_l2" pos="3.4 1.6 0"/>
+  <part type="shelf_unit" name="shelf_r0" pos="1.2 -1.6 0"/>
+  <part type="shelf_unit" name="shelf_r1" pos="2.3 -1.6 0"/>
+  <part type="shelf_unit" name="shelf_r2" pos="3.4 -1.6 0"/>
+
+  <part type="pallet"      name="pallet_a"    pos="4.7 1.5 0"/>
+  <part type="crate_heavy" name="stacked_crate" pos="4.7 1.5 0.144"/>
+  <part type="crate_heavy" name="floor_crate_b" pos="4.6 -1.4 0" yaw="0.25"/>
+  <part type="crate"       name="shelf_crate"   pos="2.3 1.6 0.562"/>
+
+  <part type="packing_bench" name="pick_table" pos="6.0 0 0"/>
+  <!-- the tote goes on its own table beside the bench, not on the randomisation surface -->
+  <part type="work_table"    name="pack_table" pos="6.0 1.6 0"/>
+  <part type="tote"          name="tote"       pos="6.0 1.6 0.75"/>
+
+  <!-- one row down the 1.8 m bench: the crate reaches 24 cm and the parcel 20 cm once jittered,
+       so they need half a metre between centres, which the bench's long axis has and its 0.9 m
+       width does not. -->
+  <object type="crate"      name="crate"       pos="6.00 -0.55 0.75" jitter="0.05" yaw_jitter="0.5"/>
+  <object type="box_parcel" name="brown_box"   pos="6.00 0.00 0.75" jitter="0.05" yaw_jitter="3.14"/>
+  <object type="cube"       name="green_cube"  pos="6.00 0.45 0.75" rgba="0.15 0.65 0.25 1" jitter="0.05" yaw_jitter="3.14"/>
+  <object type="can"        name="blue_can"    pos="6.00 0.75 0.75" jitter="0.05" optional="0.6"/>
+  <!-- the floor pick: sim_randomise keeps object height, so this one stays at floor level -->
+  <object type="crate"      name="floor_crate" pos="1.9 0.25 0" yaw="0.15" jitter="0.10" yaw_jitter="0.6"/>
+
+  <camera name="third_person"  pos="-1.6 -2.6 2.4" target="3.0 0 0.8" fovy="55"/>
+  <camera name="overhead_pick" pos="6.0 0 3.0" target="6.0 0 0.75" fovy="55"/>
+  <camera name="scene_wide"    pos="-2.5 -3.5 3.6" target="3.5 0 1.0" fovy="60"/>
+</scenario>

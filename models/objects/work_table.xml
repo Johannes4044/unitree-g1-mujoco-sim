@@ -1,0 +1,21 @@
+<mujoco model="work_table">
+  <!-- Work table 700 x 1200 mm, surface at 0.75 m - the same geometry the original
+       g1_pick_place scene used, so behaviour carries over. The surface geom is named "top":
+       attach this part with prefix "<name>_" and the surface becomes "<name>_top", which is
+       what SimSource looks for ("pick_table_top" = the randomisation surface, "*_table_top" =
+       teleport-rejection footprints). Legs are visual only (contype=0), as in the original
+       scene, so a hand cannot snag on them. Static (no free joint).
+       Origin at the floor, centre of the table. Self-authored primitive (CC0). -->
+  <asset>
+    <material name="mat" rgba="0.75 0.60 0.45 1"/>
+  </asset>
+  <worldbody>
+    <body name="work_table">
+      <geom name="top" type="box" size="0.35 0.6 0.02" pos="0 0 0.73" material="mat" friction="0.8 0.01 0.0002" condim="4"/>
+      <geom name="leg0" type="cylinder" size="0.025 0.355" pos="0.3 0.55 0.355" material="mat" contype="0" conaffinity="0"/>
+      <geom name="leg1" type="cylinder" size="0.025 0.355" pos="0.3 -0.55 0.355" material="mat" contype="0" conaffinity="0"/>
+      <geom name="leg2" type="cylinder" size="0.025 0.355" pos="-0.3 0.55 0.355" material="mat" contype="0" conaffinity="0"/>
+      <geom name="leg3" type="cylinder" size="0.025 0.355" pos="-0.3 -0.55 0.355" material="mat" contype="0" conaffinity="0"/>
+    </body>
+  </worldbody>
+</mujoco>

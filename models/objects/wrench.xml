@@ -1,0 +1,19 @@
+<mujoco model="wrench">
+  <!-- Combination wrench lying flat: 200 x 30 x 8 mm bar with two jaw ends, 0.25 kg steel.
+       Thin: a real test of finger closure. Origin at the bottom centre.
+       Self-authored primitive (CC0). -->
+  <asset>
+    <material name="mat" rgba="0.60 0.61 0.65 1"/>
+  </asset>
+  <worldbody>
+    <body name="wrench">
+      <freejoint/>
+      <geom name="shaft" type="box" size="0.070 0.011 0.004" pos="0 0 0.004" mass="0.13"
+            material="mat" condim="4" friction="0.7 0.01 0.0002" solimp="0.97 0.995 0.001" solref="0.006 1"/>
+      <geom name="jaw_px" type="box" size="0.030 0.021 0.005" pos="0.100 0 0.005" mass="0.07"
+            material="mat" condim="4" friction="0.7 0.01 0.0002" solimp="0.97 0.995 0.001" solref="0.006 1"/>
+      <geom name="jaw_nx" type="cylinder" size="0.019 0.005" pos="-0.089 0 0.005" mass="0.05"
+            material="mat" condim="4" friction="0.7 0.01 0.0002" solimp="0.97 0.995 0.001" solref="0.006 1"/>
+    </body>
+  </worldbody>
+</mujoco>

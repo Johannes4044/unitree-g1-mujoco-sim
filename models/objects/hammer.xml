@@ -1,0 +1,18 @@
+<mujoco model="hammer">
+  <!-- Claw hammer lying flat: 300 mm hickory handle + steel head, 0.55 kg. Mass is strongly
+       off-centre, so a grasp at the wrong point rotates it - the point of having a tool in the
+       library. Origin at the bottom centre of the handle. Self-authored primitive (CC0). -->
+  <asset>
+    <material name="mat" rgba="0.55 0.38 0.22 1"/>
+    <material name="steel_mat" rgba="0.55 0.56 0.60 1"/>
+  </asset>
+  <worldbody>
+    <body name="hammer">
+      <freejoint/>
+      <geom name="handle" type="cylinder" fromto="-0.15 0 0.014 0.10 0 0.014" size="0.014" mass="0.15"
+            material="mat" condim="4" friction="1.0 0.02 0.0005" solimp="0.95 0.99 0.001" solref="0.008 1"/>
+      <geom name="head" type="box" size="0.028 0.019 0.019" pos="0.125 0 0.019" mass="0.40"
+            material="steel_mat" condim="4" friction="0.7 0.01 0.0002" solimp="0.97 0.995 0.001" solref="0.006 1"/>
+    </body>
+  </worldbody>
+</mujoco>

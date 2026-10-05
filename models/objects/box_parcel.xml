@@ -1,0 +1,14 @@
+<mujoco model="box_parcel">
+  <!-- Cardboard parcel 240 x 180 x 140 mm, 0.6 kg. High friction (corrugated board).
+       Origin at the bottom centre. Self-authored primitive (CC0). -->
+  <asset>
+    <material name="mat" rgba="0.72 0.56 0.36 1"/>
+  </asset>
+  <worldbody>
+    <body name="box_parcel">
+      <freejoint/>
+      <geom name="body" type="box" size="0.12 0.09 0.07" pos="0 0 0.07" mass="0.6"
+            material="mat" condim="4" friction="1.1 0.02 0.0005" solimp="0.95 0.99 0.001" solref="0.008 1"/>
+    </body>
+  </worldbody>
+</mujoco>

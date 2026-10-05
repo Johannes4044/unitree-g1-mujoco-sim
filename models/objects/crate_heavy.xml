@@ -1,0 +1,18 @@
+<mujoco model="crate_heavy">
+  <!-- Pallet crate, 600 x 400 x 350 mm, 18 kg: deliberately NOT manipulable. Static (no free
+       joint), so it is an obstacle for navigation and a shelf for smaller objects, and the
+       runtime randomiser (which only moves free bodies) leaves it alone.
+       Origin at the bottom centre. Self-authored primitive (CC0). -->
+  <asset>
+    <material name="mat" rgba="0.45 0.35 0.25 1"/>
+  </asset>
+  <worldbody>
+    <body name="crate_heavy">
+      <geom name="bottom" type="box" size="0.30 0.20 0.010" pos="0 0 0.010" material="mat" condim="4" friction="0.9 0.02 0.0005"/>
+      <geom name="wall_py" type="box" size="0.30 0.010 0.165" pos="0 0.19 0.185" material="mat" condim="4" friction="0.9 0.02 0.0005"/>
+      <geom name="wall_ny" type="box" size="0.30 0.010 0.165" pos="0 -0.19 0.185" material="mat" condim="4" friction="0.9 0.02 0.0005"/>
+      <geom name="wall_px" type="box" size="0.010 0.20 0.165" pos="0.29 0 0.185" material="mat" condim="4" friction="0.9 0.02 0.0005"/>
+      <geom name="wall_nx" type="box" size="0.010 0.20 0.165" pos="-0.29 0 0.185" material="mat" condim="4" friction="0.9 0.02 0.0005"/>
+    </body>
+  </worldbody>
+</mujoco>

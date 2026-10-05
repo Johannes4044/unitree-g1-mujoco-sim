@@ -1,0 +1,19 @@
+<mujoco model="bottle">
+  <!-- 0.5 l plastic bottle: body r 35 mm h 150 mm + shoulder + neck, 0.55 kg full.
+       Top-heavy enough to tip if grasped badly. Origin at the bottom centre. Self-authored (CC0). -->
+  <asset>
+    <material name="mat" rgba="0.2 0.6 0.75 0.9"/>
+    <material name="cap_mat" rgba="0.85 0.85 0.85 1"/>
+  </asset>
+  <worldbody>
+    <body name="bottle">
+      <freejoint/>
+      <geom name="body" type="cylinder" size="0.035 0.075" pos="0 0 0.075" mass="0.48"
+            material="mat" condim="4" friction="0.8 0.01 0.0002" solimp="0.95 0.99 0.001" solref="0.008 1"/>
+      <geom name="neck" type="cylinder" size="0.014 0.032" pos="0 0 0.182" mass="0.05"
+            material="mat" condim="4" friction="0.8 0.01 0.0002"/>
+      <geom name="cap" type="cylinder" size="0.016 0.011" pos="0 0 0.225" mass="0.02"
+            material="cap_mat" condim="4" friction="0.9 0.01 0.0002"/>
+    </body>
+  </worldbody>
+</mujoco>

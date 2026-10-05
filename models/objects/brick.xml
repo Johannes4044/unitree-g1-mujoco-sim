@@ -1,0 +1,15 @@
+<mujoco model="brick">
+  <!-- Standard brick 215 x 102 x 65 mm, 2.3 kg. Low debris for uneven-ground work: high enough
+       to trip a foot, heavy enough not to fly away on contact.
+       Origin at the bottom centre. Self-authored primitive (CC0). -->
+  <asset>
+    <material name="mat" rgba="0.55 0.27 0.20 1"/>
+  </asset>
+  <worldbody>
+    <body name="brick">
+      <freejoint/>
+      <geom name="body" type="box" size="0.1075 0.051 0.0325" pos="0 0 0.0325" mass="2.3"
+            material="mat" condim="4" friction="0.9 0.02 0.0005" solimp="0.97 0.995 0.001" solref="0.006 1"/>
+    </body>
+  </worldbody>
+</mujoco>

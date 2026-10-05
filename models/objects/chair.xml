@@ -1,0 +1,18 @@
+<mujoco model="chair">
+  <!-- Dining chair: seat at 0.45 m, back to 0.90 m. Static clutter for house scenarios - it is
+       what the LiDAR sees at knee height and what a walking policy has to path around.
+       Origin at the floor, centre of the seat. Self-authored primitive (CC0). -->
+  <asset>
+    <material name="mat" rgba="0.45 0.32 0.24 1"/>
+  </asset>
+  <worldbody>
+    <body name="chair">
+      <geom name="seat" type="box" size="0.21 0.21 0.02" pos="0 0 0.44" material="mat" friction="0.8 0.01 0.0002" condim="4"/>
+      <geom name="back" type="box" size="0.02 0.21 0.23" pos="-0.19 0 0.68" material="mat" condim="4"/>
+      <geom name="leg0" type="box" size="0.018 0.018 0.22" pos="0.18 0.18 0.22" material="mat" condim="4"/>
+      <geom name="leg1" type="box" size="0.018 0.018 0.22" pos="0.18 -0.18 0.22" material="mat" condim="4"/>
+      <geom name="leg2" type="box" size="0.018 0.018 0.22" pos="-0.18 0.18 0.22" material="mat" condim="4"/>
+      <geom name="leg3" type="box" size="0.018 0.018 0.22" pos="-0.18 -0.18 0.22" material="mat" condim="4"/>
+    </body>
+  </worldbody>
+</mujoco>
