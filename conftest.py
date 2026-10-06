@@ -43,7 +43,13 @@ import pytest
 
 REPO_ROOT = Path(__file__).resolve().parent
 SRC = REPO_ROOT / "src"
-if importlib.util.find_spec("g1") is None:          # not installed: test the checkout
+# Was the fallback needed? Reported in the pytest header, because it is the difference
+# between "the package is installed and the tests exercise it" and "the package is not
+# importable and the tests are exercising the checkout instead". A green run means something
+# different in the two cases: in the second one, `python workspace/01_hello_sim.py` and
+# `scripts/check_scenarios.py` - which have no conftest - will still fail.
+USING_PATH_FALLBACK = importlib.util.find_spec("g1") is None
+if USING_PATH_FALLBACK:
     sys.path.insert(0, str(SRC))
 
 MODELS = REPO_ROOT / "models"
@@ -59,6 +65,21 @@ SCENARIOS = ("warehouse_aisle", "rubble_yard", "pick_place_table", "cluttered_be
 
 def built_scenario(name: str) -> Path:
     return BUILT_SCENARIOS / f"{name}.xml"
+
+
+def pytest_report_header() -> list[str]:
+    """Say which `g1` is under test, and say so loudly when it is not the installed one."""
+    import g1
+
+    lines = [f"g1: {Path(g1.__file__).resolve()}"]
+    if USING_PATH_FALLBACK:
+        lines.append(
+            "g1: NOT IMPORTABLE as an installed package - testing src/ via the conftest "
+            "sys.path fallback. The suite is valid, but it is not evidence that `import g1` "
+            "works outside it: run `python -c 'import g1'` before trusting a green run. "
+            "(Seen on macOS when every site-packages .pth file carries the UF_HIDDEN flag, "
+            "which CPython >= 3.11 skips, leaving an editable install inert.)")
+    return lines
 
 
 @pytest.fixture(scope="session")
