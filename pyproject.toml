@@ -22,8 +22,21 @@ dependencies = [
   "onnxruntime>=1.18",
 ]
 
+# Dev tooling. Mirrored in two places on purpose: `[dependency-groups]` is what `uv sync`
+# installs by default (PEP 735), `[project.optional-dependencies]` is what
+# `pip install -e ".[dev]"` understands. Neither adds a runtime dependency - the five-package
+# runtime set above is untouched, and the tests use only pytest plus what already ships.
 [project.optional-dependencies]
-dev = ["ruff>=0.5"]
+dev = [
+  "pytest>=8",
+  "ruff>=0.5",
+]
+
+[dependency-groups]
+dev = [
+  "pytest>=8",
+  "ruff>=0.5",
+]
 
 [build-system]
 requires = ["hatchling"]
@@ -34,3 +47,17 @@ packages = ["src/g1"]
 
 [tool.ruff]
 line-length = 110
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+# The fast set is the default. Rendering and the multi-thousand-step rollouts live behind the
+# `slow` marker; the contracts - the RobotSource conformance suite, the 31-slot layout, the
+# safety refusals, seeding - are all in the fast set and run in a couple of seconds.
+#
+#   pytest                  the fast set (what you run while editing, and what CI gates on)
+#   pytest -m slow          only the slow set
+#   pytest -m ""            everything
+addopts = "-m 'not slow' --strict-markers"
+markers = [
+  "slow: rendering sweeps, every-scenario sweeps and long rollouts (excluded by default)",
+]
