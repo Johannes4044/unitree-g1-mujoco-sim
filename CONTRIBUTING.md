@@ -27,11 +27,18 @@ they are not preferences:
 - **macOS must be Apple Silicon and macOS 14+.** `mujoco` 3.12.0 publishes only
   `macosx_11_0_arm64` wheels and `onnxruntime` 1.30.0 only `macosx_14_0_arm64`.
   There is no Intel-macOS wheel for either, so an Intel Mac cannot install this.
-- **Rendering on a headless Linux box needs an OpenGL context.** Set `MUJOCO_GL=egl`,
-  or `MUJOCO_GL=osmesa` for pure software. Physics-only work needs neither.
-  `MUJOCO_GL` is validated at `import mujoco`, and `egl`/`osmesa` are *Linux-only*
-  values — setting either on macOS raises on import even if you never render. Leave
-  it unset there.
+- **Rendering on a headless Linux box needs an OpenGL context.** `MUJOCO_GL=egl`
+  works — measured on a GPU-less `ubuntu-24.04` CI runner with `libegl1
+  libegl-mesa0 libgl1 libglx-mesa0 libosmesa6` installed. `MUJOCO_GL=osmesa` is the
+  pure-software fallback. Physics-only work needs neither; `MUJOCO_GL=disabled` is
+  valid everywhere and skips GL selection entirely.
+- **`MUJOCO_GL` is validated at `import mujoco`, not at first render,** and the valid
+  values are platform-dependent. `egl`/`osmesa` are *Linux-only* and raise on import
+  under macOS **even for code that never renders** — so never set it there, and never
+  set it workflow-wide in cross-platform CI.
+- **A GitHub-hosted macOS runner cannot render at all.** It has no window server
+  session, so CGL fails with `invalid pixel format`. This is a CI limitation only —
+  rendering works on a real Mac. It is why the macOS CI jobs are physics-only.
 
 ## Run the tests and the linter
 
@@ -150,9 +157,14 @@ it any time.
   commented: no torch, no lerobot, no ffmpeg, no web framework. Anything copyleft is out.
 - New third-party content needs a row in `THIRD-PARTY-NOTICES.md`, and new model assets
   need one in `models/ASSETS.md`.
-- CI runs lint, the fast tests on three OS/Python legs, the full suite on Linux, and a
-  clone-to-`5/5 scenarios OK` cold start with both documented install paths. The cold
-  start is the promise of this repo; if it goes red, nothing else matters.
+- CI runs lint, the fast tests on Python 3.11 and 3.13, the full suite on Linux, and a
+  cold start from a clone on Linux (both documented install paths, through to
+  `5/5 scenarios OK`) and on arm64 macOS (physics only — that runner cannot render).
+  The cold start is the promise of this repo; if it goes red, nothing else matters.
+- If you add tests that render, note that they currently sit in the *fast* set, which
+  is why there is no macOS pytest leg. A `render` marker, or an autouse skip when no
+  GL context can be created, would let one be added back — and would also help anyone
+  working on a Mac over SSH, where CGL fails the same way it does on the runner.
 
 ## Reporting a problem
 

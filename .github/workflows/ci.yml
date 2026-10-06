@@ -2,10 +2,15 @@ name: CI
 
 # What this workflow is for, in one line each:
 #
-#   lint        - ruff, gating on src/ (see "the inherited findings" below)
-#   test        - the fast test set, on every push, three interpreter/OS legs
+#   lint        - ruff, gating everything but the two inherited-debt directories
+#   test        - the fast test set, on every push, two interpreter legs
 #   test-full   - the whole suite including the slow rendering tests, Linux only
 #   cold start  - the actual promise of this repo: clone, install, 5/5 scenarios OK
+#
+# Rendering is verified on Linux only. A GitHub-hosted macOS runner cannot create a
+# GL context at all (CGLError: invalid pixel format - no window server session), so
+# every macOS job here is physics-only. That is a runner limitation: rendering works
+# on real Apple Silicon. Details at the macos-14 notes below.
 #
 # Platform constraint that drives the whole matrix (verified against PyPI):
 #
@@ -111,8 +116,23 @@ jobs:
             python: "3.11"
           - os: ubuntu-24.04
             python: "3.13"
-          - os: macos-14
-            python: "3.11"
+          # There is no macos-14 leg here, and that is a measured runner limitation,
+          # not an oversight. A GitHub-hosted macOS runner has no window server
+          # session, so CGLChoosePixelFormat fails with "invalid pixel format" and
+          # every render dies - on real Apple Silicon the same code renders fine
+          # (verified locally). The rendering tests live in the FAST set, not behind
+          # the `slow` marker, so there is no marker expression that would skip them:
+          # the first run of this workflow on macos-14 was 140 passed, 26 failed,
+          # 10 errors, every failure a CGLError from rgb()/depth()/lidar().
+          #
+          # macOS is still covered, by `cold start (uv, macos-14)` below: it proves
+          # the arm64 wheels install and that physics and state() work, which is the
+          # part of the platform CI can actually speak to.
+          #
+          # To restore this leg: have the test suite skip rendering tests when no GL
+          # context can be created (a `render` marker, or an autouse skip that tries
+          # mujoco.Renderer once per session), then run
+          # `pytest -m "not slow and not render"` here.
     steps:
       - uses: actions/checkout@v5.1.0
 
@@ -183,11 +203,28 @@ jobs:
       - uses: ./.github/actions/headless-gl
         if: runner.os == 'Linux'
 
+      # Linux: the full end-to-end check. Compiles all five scenarios, settles
+      # physics, renders every camera, takes a Mid-360 scan. This is the promise.
       - name: python scripts/check_scenarios.py
+        if: runner.os == 'Linux'
         run: |
           set -o pipefail   # default shell is `bash -e`, without it tee would mask a failure
           uv run python scripts/check_scenarios.py | tee check.log
           grep -q '5/5 scenarios OK' check.log
+
+      # macOS: physics only, because check_scenarios.py renders and this runner
+      # cannot open a GL context (see the note in the `test` matrix above). What is
+      # verified here is the thing macOS is actually interesting for - that the
+      # arm64-only mujoco and onnxruntime wheels resolve, install and import, and
+      # that the vendored scene compiles and steps.
+      - name: python .github/scripts/install_check.py (physics only)
+        if: runner.os == 'macOS'
+        env:
+          MUJOCO_GL: disabled   # valid on every platform; skips GL selection entirely
+        run: |
+          echo "::notice::Rendering is not verified on macOS runners: no window server"
+          echo "::notice::session, so CGL cannot choose a pixel format. Linux covers rendering."
+          uv run python .github/scripts/install_check.py
 
   cold-start-pip:
     name: cold start (pip + venv, ubuntu-24.04)

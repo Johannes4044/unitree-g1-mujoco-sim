@@ -19,10 +19,18 @@ description: >
 #
 #   Which of the two works on ubuntu-24.04 could not be verified from the machine
 #   this file was written on (macOS - see below), so rather than guess, we install
-#   the packages for both and try egl first, falling back to osmesa. The chosen
-#   backend is printed to the log and written to the job summary, so the first real
-#   CI run answers the question permanently. If egl turns out to be reliable, the
-#   fallback simply never fires; if it is not, nothing goes red.
+#   the packages for both and try egl first, falling back to osmesa.
+#
+#   MEASURED ANSWER, from the first real run of this workflow (ubuntu-24.04,
+#   runner image ubuntu24): MUJOCO_GL=egl works, first try, with the apt packages
+#   below and no GPU. The probe rendered (64, 64, 3) mean=111.9 - byte-identical in
+#   mean to the same scene rendered through CGL on a Mac - and the osmesa fallback
+#   never fired. The full 186-test suite including every rendering test then passed
+#   on that backend in 1m05.
+#
+#   The fallback stays anyway: it costs one subprocess on the happy path, and it is
+#   what turns a runner-image change that drops Mesa's EGL device from a red X into
+#   a slower green.
 #
 # The macOS trap, measured:
 #
@@ -31,8 +39,13 @@ description: >
 #   'egl' and 'osmesa' are Linux-only and raise RuntimeError on import under Darwin
 #   - even for a physics-only test that never renders. So MUJOCO_GL must never be
 #   set at workflow or job level in a cross-platform matrix. It is set here, by a
-#   step that only ever runs on Linux. macOS uses the default (cgl) and needs none
-#   of this.
+#   step that only ever runs on Linux.
+#
+#   There is no macOS equivalent of this action, and nothing to write: a
+#   GitHub-hosted macOS runner has no window server session, so the only backend
+#   Darwin offers (cgl) fails at CGLChoosePixelFormat with "invalid pixel format".
+#   Measured, same first run. macOS CI is therefore physics-only by necessity; see
+#   the notes in ci.yml.
 
 inputs:
   python-cmd:
