@@ -124,6 +124,8 @@ jobs:
       - uses: ./.github/actions/headless-gl
         if: runner.os == 'Linux'
 
+      # Redundant with pyproject's addopts (`-m 'not slow'` is already the default),
+      # but spelled out so the log says which set ran.
       - name: pytest -m "not slow"
         run: uv run pytest -m "not slow"
 
@@ -142,11 +144,14 @@ jobs:
 
       - uses: ./.github/actions/headless-gl
 
-      # No -m filter: slow and fast together. One leg only - the slow tests load
-      # the full G1 scene and render, and they exercise the simulator, not the
-      # interpreter, so running them three times buys nothing.
-      - name: pytest (all markers)
-        run: uv run pytest
+      # `-m ""` and not a bare `pytest`: pyproject sets
+      # `addopts = "-m 'not slow' --strict-markers"`, so plain `pytest` is the FAST
+      # set. The empty marker expression clears that filter and runs slow and fast
+      # together (186 tests vs 176, measured). One leg only - the slow tests load
+      # the full G1 scene and render, so they exercise the simulator, not the
+      # interpreter, and running them three times buys nothing.
+      - name: pytest -m "" (every marker)
+        run: uv run pytest -m ""
 
   cold-start-uv:
     name: cold start (uv, ${{ matrix.os }})

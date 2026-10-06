@@ -13,9 +13,12 @@ or with pip:
 ```bash
 python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
-pip install -e .
-pip install pytest ruff       # the dev tools; `uv sync --all-extras` gets these for you
+pip install -e ".[dev]"       # the dev tools: pytest, ruff
 ```
+
+The dev tooling is declared twice on purpose — `[dependency-groups]` for `uv sync`
+and `[project.optional-dependencies]` for `pip install -e ".[dev]"`. A test asserts
+the two lists stay identical, so add new tools to both.
 
 `docs/INSTALL.md` is the long version, including installing Python itself and an
 offline install from a USB stick. Two hard constraints worth repeating here, because
@@ -33,10 +36,15 @@ they are not preferences:
 ## Run the tests and the linter
 
 ```bash
-uv run pytest -m "not slow"   # the fast set; what CI runs on every push
-uv run pytest                 # everything, including the slow rendering tests
+uv run pytest                 # the fast set - the default, and what CI gates on
+uv run pytest -m slow         # only the slow set: rendering and long rollouts
+uv run pytest -m ""           # everything
 uv run ruff check . --exclude scripts --exclude workspace   # the lint gate
 ```
+
+`pyproject.toml` sets `addopts = "-m 'not slow' --strict-markers"`, which is why a
+bare `pytest` is the *fast* set and clearing the filter takes an empty marker
+expression. Measured here: 176 passed in ~10 s fast, 186 in ~14 s for everything.
 
 `ruff check .` is **not** clean, and that is expected. The findings all sit in
 `scripts/` and `workspace/`; they came across with the extraction (see below) and are
