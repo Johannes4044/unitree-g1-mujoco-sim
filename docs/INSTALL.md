@@ -181,6 +181,7 @@ pip download -r requirements-lock.txt -d wheels \
 | `onnxruntime` has no matching wheel | Python older than 3.11, macOS older than 14, or an **Intel** Mac (arm64 wheels only). |
 | `ARB_clip_control unavailable...` on stderr | Harmless. A depth-precision notice from the renderer, not an error. |
 | Rendering fails on a headless Linux box | Needs an OpenGL context. Try `MUJOCO_GL=egl`, or `osmesa` for pure software. |
+| `CGLError: invalid pixel format` on macOS | A headless macOS session (SSH, a CI runner) **cannot render at all** — no window server, and MuJoCo has no software GL for macOS. Physics still works. See "Rendering needs a GL context" in `docs/cheatsheet.md`. |
 | `pip` is very slow or blocked | Corporate proxy. Use the offline path in step 3. |
 | Offline: `No matching distribution found for editables` | You skipped `pip download hatchling editables -d wheels` on the networked machine. |
 

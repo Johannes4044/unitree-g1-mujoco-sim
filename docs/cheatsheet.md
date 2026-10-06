@@ -129,3 +129,26 @@ Per call, software GL (llvmpipe) at 424×240; a GPU is 3–5× faster:
 
 Physics is ~60 µs/step on an idle machine at a 2 ms timestep, i.e. 30× realtime. Rendering, not
 physics, is what limits a recording loop.
+
+## Rendering needs a GL context; physics does not
+
+`rgb()`, `depth()` and `lidar()` all go through `mujoco.Renderer`, which creates an OpenGL
+context. `state()`, `step()` and everything in `g1.wbc` do not. So a machine with no usable GL
+runs the physics and the whole `RobotSource` command surface fine and cannot take a single
+image. Measured, not inferred:
+
+| | |
+|---|---|
+| Linux, headless, no GPU | **Works.** `MUJOCO_GL=egl` with `libegl1 libegl-mesa0 libgl1 libglx-mesa0 libosmesa6`; `osmesa` is the pure-software fallback. CI renders the full suite this way. |
+| macOS, logged-in desktop session | **Works**, through CGL. Nothing to set. |
+| macOS, headless — SSH, `ssh -X`, a CI runner | **Cannot render at all.** No window server session, so `CGLChoosePixelFormat` fails and every `Renderer` raises `mujoco.cgl.cgl.CGLError: invalid pixel format`. There is no backend to switch to: MuJoCo has no software GL on macOS. Run the rendering half on Linux, or in a local desktop session. |
+| Container without Mesa | Install the Linux packages above, or expect the same CGL-shaped failure with a different exception. |
+
+`MUJOCO_GL` is validated at `import mujoco`, not at first render, and `egl`/`osmesa` are
+Linux-only values that raise on import under macOS — so do not set it unconditionally in a
+cross-platform script, even one that never renders.
+
+The test suite probes this once per session and skips the camera, depth and LiDAR tests with a
+reason when no context can be created, rather than reporting them as failures; the physics and
+contract tests still run. `G1_TEST_FORCE_NO_GL=1` forces that path, to check what a GL-less
+machine would see.
