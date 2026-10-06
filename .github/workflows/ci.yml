@@ -1,0 +1,212 @@
+name: CI
+
+# What this workflow is for, in one line each:
+#
+#   lint        - ruff, gating on src/ (see "the inherited findings" below)
+#   test        - the fast test set, on every push, three interpreter/OS legs
+#   test-full   - the whole suite including the slow rendering tests, Linux only
+#   cold start  - the actual promise of this repo: clone, install, 5/5 scenarios OK
+#
+# Platform constraint that drives the whole matrix (verified against PyPI):
+#
+#   mujoco 3.12.0      ships macosx_11_0_arm64 wheels and nothing else for macOS
+#   onnxruntime 1.30.0 ships macosx_14_0_arm64 wheels and nothing else for macOS
+#
+#   There is no Intel-macOS wheel for either package, so `macos-13` - which is an
+#   Intel runner - cannot install this repo at all and must never be added to a
+#   matrix here. Every macOS leg uses `macos-14`, which is Apple Silicon and whose
+#   OS version is exactly the floor onnxruntime requires. macos-15 / macos-latest
+#   are also arm64 and would work; macos-14 is pinned because it is the oldest
+#   configuration docs/INSTALL.md claims to support, so it is the one worth testing.
+#
+# MUJOCO_GL is deliberately NOT set at workflow or job level: MuJoCo validates it at
+# `import mujoco` and 'egl'/'osmesa' are Linux-only values that raise under Darwin,
+# even for tests that never render. Linux jobs get it from ./.github/actions/headless-gl,
+# which also explains the egl-vs-osmesa question.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+# One run per branch/PR; superseded PR runs are cancelled, pushes to main are not.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  lint:
+    name: lint (ruff)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5.1.0
+
+      - uses: astral-sh/setup-uv@v10.2.0
+        with:
+          python-version: "3.11"
+          enable-cache: true
+
+      # --all-extras rather than a plain `uv sync` so this works whether the dev
+      # tooling lives in [project.optional-dependencies] or in a PEP 735
+      # [dependency-groups] (uv installs default groups either way).
+      - run: uv sync --all-extras
+
+      # The gate: everything except the two directories that carry the inherited
+      # lint debt (see the long note below). Scoped on the command line, not in
+      # [tool.ruff], so new code anywhere - src/, tests/, conftest.py, .github/ -
+      # is gated the moment it appears, and nothing about the ruff config is
+      # weakened. Delete the excludes once scripts/ and workspace/ are clean.
+      - name: ruff check (gate - all but scripts/ and workspace/)
+        run: uv run ruff check . --exclude scripts --exclude workspace
+
+      # The inherited findings.
+      #
+      # `ruff check .` is not clean and has never been: this repo is an extraction
+      # from a larger private project and scripts/ and workspace/ came across with
+      # the source project's lint debt. Measured on this tree:
+      #
+      #   ruff 0.13.3  -> 18 findings, all in scripts/  (E402 x8, E702 x5, E731,
+      #                   F401 x2, and friends)
+      #   ruff 0.16.10 ->  9 findings in scripts/ + workspace/ (different default
+      #                   rule set: I001, C408, RUF046, RUF059, F401)
+      #   everything else -> clean under both
+      #
+      # Two things follow. First, the count is a function of the ruff version, and
+      # pyproject.toml asks only for `ruff>=0.5` - so a hard gate on `ruff check .`
+      # would go red on a day nobody touched the code. Second, the debt is confined
+      # to those two directories. So the gate above excludes exactly those two, and
+      # the full-tree run below is advisory: it prints the baseline on every run so
+      # it stays visible and can be paid down, without blocking a PR that did not
+      # cause it.
+      #
+      # The fix is to clean scripts/ and workspace/ up, then drop the excludes. It
+      # is explicitly NOT to relax the ruff config.
+      - name: ruff check . (inherited baseline, advisory)
+        continue-on-error: true
+        run: uv run ruff check .
+
+  test:
+    name: test (${{ matrix.os }}, py${{ matrix.python }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        # Three legs, chosen so each one can fail for its own reason:
+        #   ubuntu/3.11  - the floor declared by requires-python
+        #   ubuntu/3.13  - the newest interpreter all five deps ship wheels for
+        #   macos-14     - arm64, i.e. the only macOS that can install this at all
+        # Not a full OS x Python fan-out: the deps are pure prebuilt wheels and the
+        # code is pure Python, so the interesting axes are "oldest/newest Python"
+        # and "is there a GL context", not the cross product.
+        include:
+          - os: ubuntu-24.04
+            python: "3.11"
+          - os: ubuntu-24.04
+            python: "3.13"
+          - os: macos-14
+            python: "3.11"
+    steps:
+      - uses: actions/checkout@v5.1.0
+
+      - uses: astral-sh/setup-uv@v10.2.0
+        with:
+          python-version: ${{ matrix.python }}
+          enable-cache: true
+
+      - run: uv sync --all-extras
+
+      # Even the fast set gets a GL context on Linux: whether a given test renders
+      # is the test suite's business, not this workflow's, and the probe is ~20s.
+      - uses: ./.github/actions/headless-gl
+        if: runner.os == 'Linux'
+
+      - name: pytest -m "not slow"
+        run: uv run pytest -m "not slow"
+
+  test-full:
+    name: test (full suite, incl. slow + rendering)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5.1.0
+
+      - uses: astral-sh/setup-uv@v10.2.0
+        with:
+          python-version: "3.11"
+          enable-cache: true
+
+      - run: uv sync --all-extras
+
+      - uses: ./.github/actions/headless-gl
+
+      # No -m filter: slow and fast together. One leg only - the slow tests load
+      # the full G1 scene and render, and they exercise the simulator, not the
+      # interpreter, so running them three times buys nothing.
+      - name: pytest (all markers)
+        run: uv run pytest
+
+  cold-start-uv:
+    name: cold start (uv, ${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, macos-14]
+    steps:
+      - uses: actions/checkout@v5.1.0
+
+      # No cache in the cold-start jobs, on purpose. The thing being tested is
+      # "someone clones this and runs two commands"; a warm wheel cache would hide
+      # a resolution failure or an unreachable artifact, which is exactly the class
+      # of breakage this job exists to catch.
+      - uses: astral-sh/setup-uv@v10.2.0
+        with:
+          python-version: "3.11"
+          enable-cache: false
+
+      # Exactly what README.md and docs/INSTALL.md tell a newcomer to type.
+      - name: uv sync
+        run: uv sync
+
+      - uses: ./.github/actions/headless-gl
+        if: runner.os == 'Linux'
+
+      - name: python scripts/check_scenarios.py
+        run: |
+          set -o pipefail   # default shell is `bash -e`, without it tee would mask a failure
+          uv run python scripts/check_scenarios.py | tee check.log
+          grep -q '5/5 scenarios OK' check.log
+
+  cold-start-pip:
+    name: cold start (pip + venv, ubuntu-24.04)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5.1.0
+
+      # Uncached for the same reason as cold-start-uv.
+      - uses: actions/setup-python@v6.3.0
+        with:
+          python-version: "3.11"
+
+      # The second documented install path, typed out as docs/INSTALL.md has it.
+      # A venv rather than bare pip, because that is what the docs tell people to
+      # do and `pip install -e .` into the system Python would not test it.
+      - name: python -m venv .venv && pip install
+        run: |
+          python -m venv .venv
+          .venv/bin/python -m pip install --upgrade pip
+          .venv/bin/python -m pip install -r requirements.txt
+          .venv/bin/python -m pip install -e .
+
+      - uses: ./.github/actions/headless-gl
+        with:
+          python-cmd: .venv/bin/python
+
+      - name: python scripts/check_scenarios.py
+        run: |
+          set -o pipefail   # default shell is `bash -e`, without it tee would mask a failure
+          .venv/bin/python scripts/check_scenarios.py | tee check.log
+          grep -q '5/5 scenarios OK' check.log

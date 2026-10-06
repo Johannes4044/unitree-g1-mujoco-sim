@@ -1,0 +1,64 @@
+name: Install or run problem
+description: It won't install, or a script fails on your machine.
+labels: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Almost every problem with this repo is one of four things, and three of them
+        you can check in ten seconds:
+
+        - **An Intel Mac.** `mujoco` and `onnxruntime` publish arm64-only macOS
+          wheels. There is no Intel build. It cannot work.
+        - **macOS 13 or older.** `onnxruntime` needs macOS 14+.
+        - **Python 3.10 or older.** Needs 3.11+.
+        - **Headless Linux with no OpenGL context.** Physics works, rendering
+          doesn't. Try `MUJOCO_GL=egl`, or `MUJOCO_GL=osmesa` for pure software.
+
+        The fields below are the ones that tell those apart.
+
+  - type: textarea
+    id: env
+    attributes:
+      label: Environment
+      description: Paste the output of these, whichever apply.
+      value: |
+        $ python --version
+        $ uname -srm
+        $ sw_vers -productVersion      # macOS only
+        $ echo "MUJOCO_GL=$MUJOCO_GL"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: install
+    attributes:
+      label: How did you install?
+      options:
+        - uv sync
+        - pip install -r requirements.txt && pip install -e .
+        - offline / --no-index from a wheels directory
+        - something else
+    validations:
+      required: true
+
+  - type: textarea
+    id: what
+    attributes:
+      label: What you ran and what happened
+      description: The command, and the full output or traceback.
+      render: text
+    validations:
+      required: true
+
+  - type: textarea
+    id: smoke
+    attributes:
+      label: Output of the smoke test
+      description: >
+        `python scripts/smoke_test.py` separates "physics is broken" from
+        "rendering is broken" and prints which it is. Paste its output if you can
+        get that far.
+      render: text
+    validations:
+      required: false

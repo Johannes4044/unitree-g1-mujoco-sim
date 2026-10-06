@@ -1,0 +1,82 @@
+name: Headless OpenGL for MuJoCo
+description: >
+  Install Mesa on a headless Linux runner, then determine which MUJOCO_GL backend
+  actually renders there and export it for the rest of the job.
+
+# Why this exists, and why it *probes* instead of asserting:
+#
+#   MuJoCo needs a real OpenGL context to render (rgb(), depth(), mujoco.Renderer).
+#   A GitHub-hosted Linux runner has no GPU and no X display, so the two candidates
+#   documented in docs/INSTALL.md are:
+#
+#     MUJOCO_GL=egl     - hardware path; on a GPU-less runner it resolves to Mesa's
+#                         software EGL device. Needs libEGL + the Mesa EGL driver,
+#                         and needs that driver to expose eglQueryDevicesEXT, which
+#                         is how mujoco/egl/__init__.py enumerates devices.
+#     MUJOCO_GL=osmesa  - pure software, no device enumeration at all. Needs
+#                         libOSMesa (apt: libosmesa6). Slower but has no way to
+#                         care about the absence of a GPU.
+#
+#   Which of the two works on ubuntu-24.04 could not be verified from the machine
+#   this file was written on (macOS - see below), so rather than guess, we install
+#   the packages for both and try egl first, falling back to osmesa. The chosen
+#   backend is printed to the log and written to the job summary, so the first real
+#   CI run answers the question permanently. If egl turns out to be reliable, the
+#   fallback simply never fires; if it is not, nothing goes red.
+#
+# The macOS trap, measured:
+#
+#   MUJOCO_GL is validated at `import mujoco`, not at first render, and the set of
+#   valid values is platform-dependent (mujoco/rendering/classic/gl_context.py):
+#   'egl' and 'osmesa' are Linux-only and raise RuntimeError on import under Darwin
+#   - even for a physics-only test that never renders. So MUJOCO_GL must never be
+#   set at workflow or job level in a cross-platform matrix. It is set here, by a
+#   step that only ever runs on Linux. macOS uses the default (cgl) and needs none
+#   of this.
+
+inputs:
+  python-cmd:
+    description: Command prefix that runs Python with the project installed.
+    default: uv run python
+
+outputs:
+  backend:
+    description: The MUJOCO_GL value that rendered successfully ("egl" or "osmesa").
+    value: ${{ steps.probe.outputs.backend }}
+
+runs:
+  using: composite
+  steps:
+    - name: Install Mesa (EGL + OSMesa)
+      if: runner.os == 'Linux'
+      shell: bash
+      run: |
+        sudo apt-get update -qq
+        sudo apt-get install -y --no-install-recommends \
+          libegl1 libegl-mesa0 libgl1 libglx-mesa0 libosmesa6
+        # Package names are ubuntu-24.04's. Note libgl1-mesa-glx no longer exists
+        # there; libglx-mesa0 is its replacement.
+
+    - name: Probe MUJOCO_GL backends
+      id: probe
+      if: runner.os == 'Linux'
+      shell: bash
+      run: |
+        chosen=""
+        for backend in egl osmesa; do
+          echo "::group::MUJOCO_GL=$backend"
+          if MUJOCO_GL="$backend" ${{ inputs.python-cmd }} .github/scripts/render_probe.py; then
+            chosen="$backend"
+            echo "::endgroup::"
+            break
+          fi
+          echo "::endgroup::"
+          echo "MUJOCO_GL=$backend did not work on this runner; trying the next one."
+        done
+        if [ -z "$chosen" ]; then
+          echo "::error::Neither MUJOCO_GL=egl nor MUJOCO_GL=osmesa could render on $(uname -a)."
+          exit 1
+        fi
+        echo "backend=$chosen" >> "$GITHUB_OUTPUT"
+        echo "MUJOCO_GL=$chosen" >> "$GITHUB_ENV"
+        echo "Headless GL backend: \`MUJOCO_GL=$chosen\` on \`$ImageOS\`" >> "$GITHUB_STEP_SUMMARY"

@@ -1,5 +1,7 @@
 # G1 sim
 
+[![CI](https://github.com/Johannes4044/unitree-g1-mujoco-sim/actions/workflows/ci.yml/badge.svg)](https://github.com/Johannes4044/unitree-g1-mujoco-sim/actions/workflows/ci.yml)
+
 A MuJoCo simulator of a Unitree G1 — 29 body joints, two BrainCo Revo 2 hands, a 2-DoF camera
 head, two RealSense cameras and a Livox Mid-360 — with the Python interface you build policies
 against. It is a stripped-down extract of a larger project: scene, scenarios, robot sources and
