@@ -52,13 +52,20 @@ a known baseline:
 
 | ruff | findings | where |
 |---|---|---|
-| 0.13.3 | 18 | `scripts/` only (`E402` ×8, `E702` ×5, `E731`, `F401` ×2, …) |
-| 0.16.10 | 9 | `scripts/` + `workspace/` (`I001`, `C408`, `RUF046`, `RUF059`, `F401`) |
-| either | 0 | everywhere else, `src/` included |
+| 0.13.3 – 0.15.x | 18 | `scripts/` 18, `workspace/` 0 (`E402` ×8, `E702` ×5, `E731`, `F401` ×2, …) |
+| 0.16.0 – 0.16.10 | 9 | `scripts/` 6, `workspace/` 3 (`I001`, `C408`, `RUF046`, `RUF059`, `F401`) |
+| any | 0 | everywhere else, `src/`, `tests/` and `conftest.py` included |
 
-The count moves with the ruff version because `pyproject.toml` asks for `ruff>=0.5`
-and ruff's default rule set has changed between releases — so a hard gate on
-`ruff check .` could go red on a day nobody touched the code. CI therefore gates on
+Measured version by version: the count is 18 up to and including 0.15.x and 9 from
+0.16.0 on, because 0.16 changed ruff's *default* rule set — it dropped the
+pycodestyle `E4`/`E7` checks that produced most of the 18 and added `I`, `C4` and
+`RUF` rules that produce different ones. Nothing in this repo changed. If you have
+seen the number "6" quoted for this tree, that is the `scripts/` subset under
+0.16.x, not the whole count.
+
+So the count is a function of the ruff version, `pyproject.toml` asks only for
+`ruff>=0.5`, and a hard gate on `ruff check .` could therefore go red on a day
+nobody touched the code. CI therefore gates on
 the tree *minus those two directories*, which means new code anywhere — `src/`,
 `tests/`, `conftest.py` — is gated from the moment it appears, and separately runs
 `ruff check .` as an advisory step so the baseline stays visible. The excludes live

@@ -69,11 +69,15 @@ jobs:
       # from a larger private project and scripts/ and workspace/ came across with
       # the source project's lint debt. Measured on this tree:
       #
-      #   ruff 0.13.3  -> 18 findings, all in scripts/  (E402 x8, E702 x5, E731,
-      #                   F401 x2, and friends)
-      #   ruff 0.16.10 ->  9 findings in scripts/ + workspace/ (different default
-      #                   rule set: I001, C408, RUF046, RUF059, F401)
-      #   everything else -> clean under both
+      #   ruff 0.13.3 - 0.15.x -> 18 findings, all in scripts/  (E402 x8, E702 x5,
+      #                           E731, F401 x2, and friends)
+      #   ruff 0.16.0 - 0.16.10 ->  9 findings: 6 in scripts/, 3 in workspace/
+      #                           (I001, C408, RUF046, RUF059, F401)
+      #   everything else -> clean under every version tested
+      #
+      # The jump is 0.16.0 changing ruff's default rule set, not anything in this
+      # repo: it dropped the pycodestyle E4/E7 checks behind most of the 18 and
+      # added I/C4/RUF rules that find different things.
       #
       # Two things follow. First, the count is a function of the ruff version, and
       # pyproject.toml asks only for `ruff>=0.5` - so a hard gate on `ruff check .`
