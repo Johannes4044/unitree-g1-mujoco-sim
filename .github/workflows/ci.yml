@@ -66,12 +66,25 @@ jobs:
       # is gated the moment it appears, and nothing about the ruff config is
       # weakened. Delete the excludes once scripts/ and workspace/ are clean.
       #
-      # The `./` prefixes are load-bearing. A ruff exclude pattern with no path
-      # separator is matched against the BASENAME, so a bare `--exclude scripts`
-      # also excludes `.github/scripts/` - which silently left this workflow's own
-      # Python ungated, and did so while reporting "All checks passed". Measured:
-      # `ruff check .github --exclude=scripts` prints "No Python files found".
-      # Anchoring to `./scripts` excludes the top-level directory only.
+      # The path separators are load-bearing; the `./` spelling is not special. A
+      # ruff exclude pattern with NO path separator is matched against the
+      # BASENAME, so a bare `--exclude scripts` also excludes `.github/scripts/` -
+      # which silently left this workflow's own Python ungated, and did so while
+      # reporting "All checks passed". Any pattern containing a separator anchors
+      # to the project root instead. Measured, with a deliberate finding planted in
+      # .github/scripts/ to make the hole observable:
+      #
+      #   pattern      total  top-level scripts/  .github/
+      #   scripts        0            0               0     <- the hole
+      #   scripts/       2            0               2
+      #   ./scripts      2            0               2     <- used here
+      #   scripts/*      2            0               2
+      #   /scripts       8            6               2     <- a LEADING slash
+      #                                                        excludes nothing
+      #
+      # So `scripts/`, `./scripts` and `scripts/*` are interchangeable; `./` is used
+      # only because it reads as "the one in this directory". A leading slash is the
+      # spelling that silently stops excluding anything at all.
       - name: ruff check (gate - all but ./scripts and ./workspace)
         run: uv run ruff check . --exclude=./scripts --exclude=./workspace
 

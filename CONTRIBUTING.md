@@ -77,10 +77,14 @@ nobody touched the code. The *gated* set, by contrast, is clean under 0.13.3,
 0.15.0, 0.16.0 and 0.16.10 — so the gate does not move when ruff does; only the
 advisory full-tree count does.
 
-The `./` prefixes on the excludes are load-bearing. A ruff exclude pattern with no
-path separator is matched against the **basename**, so a bare `--exclude scripts`
+The path separators in the excludes are load-bearing. A ruff exclude pattern with
+no path separator is matched against the **basename**, so a bare `--exclude scripts`
 also excludes `.github/scripts/` — and reports "All checks passed" while doing it.
-Anchor them, or the gate quietly stops covering what you think it covers. CI therefore gates on
+Any pattern containing a separator anchors to the project root, so `./scripts`,
+`scripts/` and `scripts/*` all behave identically and all work; `./` is used here
+only for explicitness. A *leading* slash (`/scripts`) is the one spelling that
+silently excludes nothing. Keep a separator in them, or the gate quietly stops
+covering what you think it covers. CI therefore gates on
 the tree *minus those two directories*, which means new code anywhere — `src/`,
 `tests/`, `conftest.py` — is gated from the moment it appears, and separately runs
 `ruff check .` as an advisory step so the baseline stays visible. The excludes live
