@@ -50,7 +50,14 @@ def _record(ep, sim, frames=FRAMES):
 
 
 @pytest.fixture
-def recorded(episode_module, make_sim):
+def recorded(episode_module, make_sim, requires_rendering):
+    """Records camera frames, so it cannot run without a GL context.
+
+    `requires_rendering` is requested *by the fixture* on purpose: a fixture that raises
+    turns every test using it into an ERROR, which reads as breakage. `pytest.skip` from
+    inside a fixture skips its tests cleanly instead, so the output says "not covered here"
+    rather than "something is wrong here".
+    """
     ep = episode_module
     sim = make_sim(cam_w=ep.CAM_W, cam_h=ep.CAM_H)
     sim.sim_reset()
@@ -189,7 +196,8 @@ def test_the_slot_table_in_the_sidecar_matches_the_vector(recorded, tmp_path):
 
 # --- the real thing ----------------------------------------------------------------------
 @pytest.mark.slow
-def test_example_06_writes_a_loadable_episode(episode_module, monkeypatch, tmp_path):
+def test_example_06_writes_a_loadable_episode(episode_module, monkeypatch, tmp_path,
+                                              requires_rendering):
     """Run `main()` end to end - 90 frames, 180 renders - and read the files back the way a
     dataloader would. This is the test that would catch the recorder drifting away from the
     layout the fast tests pin."""

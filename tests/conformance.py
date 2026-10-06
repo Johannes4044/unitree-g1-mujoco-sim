@@ -154,7 +154,11 @@ class RobotSourceContract:
         assert all(math.isfinite(v) and -50.0 < v < 300.0 for v in temp.values())
 
     # --- cameras -----------------------------------------------------------------
-    def test_rgb_is_uint8_hwc_or_none(self, source):
+    # `requires_rendering` guards the local graphics stack, not the implementation: without a
+    # GL context `SimSource` cannot produce an image at all, so there is nothing to check.
+    # An implementation that gets its frames from a camera rather than a renderer - the real
+    # robot - will never be skipped by it on a machine that can render.
+    def test_rgb_is_uint8_hwc_or_none(self, source, requires_rendering):
         for cam in CAMERAS:
             img = source.rgb(cam)
             if img is None:
@@ -163,7 +167,7 @@ class RobotSourceContract:
             assert img.ndim == 3 and img.shape[2] == 3, f"{cam} rgb shape {img.shape}"
             assert img.shape[0] > 0 and img.shape[1] > 0
 
-    def test_depth_is_float32_metres_or_none(self, source):
+    def test_depth_is_float32_metres_or_none(self, source, requires_rendering):
         for cam in CAMERAS:
             d = source.depth(cam)
             if d is None:
@@ -173,7 +177,7 @@ class RobotSourceContract:
             assert np.isfinite(d).all(), f"{cam} depth has non-finite values"
             assert (d > 0).all(), f"{cam} depth has non-positive values"
 
-    def test_depth_is_asked_for_by_the_colour_camera_name(self, source):
+    def test_depth_is_asked_for_by_the_colour_camera_name(self, source, requires_rendering):
         """The aligned-depth convention: you ask `depth("d455_rgb")`, not `depth("d455_depth")`."""
         for colour in DEPTHS:
             if source.rgb(colour) is None:
@@ -185,7 +189,7 @@ class RobotSourceContract:
         assert source.depth("no_such_camera") is None
 
     # --- lidar -------------------------------------------------------------------
-    def test_lidar_is_a_cloud_with_a_sensor_pose_or_none(self, source):
+    def test_lidar_is_a_cloud_with_a_sensor_pose_or_none(self, source, requires_rendering):
         out = source.lidar()
         if out is None:
             return                             # a source with no LiDAR yet

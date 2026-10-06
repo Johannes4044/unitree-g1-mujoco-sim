@@ -98,12 +98,12 @@ def _ranges(sim):
     return points, np.linalg.norm(points - pos, axis=1)
 
 
-def test_a_sweep_is_fifteen_thousand_points(make_sim):
+def test_a_sweep_is_fifteen_thousand_points(make_sim, requires_rendering):
     points, _ = _ranges(make_sim())
     assert len(points) == LIDAR_POINTS
 
 
-def test_a_sweep_stays_inside_the_sensor_range_gate(make_sim):
+def test_a_sweep_stays_inside_the_sensor_range_gate(make_sim, requires_rendering):
     from g1.robot.lidar import MAX_RANGE, MIN_RANGE
 
     _, rng = _ranges(make_sim())
@@ -111,7 +111,7 @@ def test_a_sweep_stays_inside_the_sensor_range_gate(make_sim):
     assert rng.max() < MAX_RANGE + NOISE_SLACK
 
 
-def test_a_sweep_stays_inside_the_sensor_elevation_band(make_sim):
+def test_a_sweep_stays_inside_the_sensor_elevation_band(make_sim, requires_rendering):
     """-52 .. +7 degrees, after the upside-down mount on the crown.
 
     Only points beyond 1 m are checked, and that is not a fudge: `LidarSim.scan` applies the
@@ -135,7 +135,7 @@ def test_a_sweep_stays_inside_the_sensor_elevation_band(make_sim):
 
 @pytest.mark.slow
 @pytest.mark.parametrize("name", SCENARIOS)
-def test_each_scenario_lidar_range(make_sim, scenario_models, name):
+def test_each_scenario_lidar_range(make_sim, scenario_models, name, requires_rendering):
     """Slow: five models, each settled for 2 s and scanned.
 
     Tolerances. The *nearest* return is a fixed piece of the robot's own crown or torso, so

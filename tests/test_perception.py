@@ -18,6 +18,11 @@ import pytest
 from g1.robot.robot_source import CAMERAS, DEPTHS
 
 
+@pytest.fixture(autouse=True)
+def _needs_gl(requires_rendering):
+    """Every test in this module renders, so guard the whole module in one place."""
+
+
 @pytest.fixture
 def sim(make_sim):
     """A settled simulator at a small render size. 0.5 s is enough for the keyframe pose to

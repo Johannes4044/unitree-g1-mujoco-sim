@@ -172,7 +172,7 @@ def test_a_randomisation_does_not_change_the_reported_sha256(make_sim):
 
 
 # --- the one thing that is not seeded ----------------------------------------------------
-def test_lidar_draws_from_the_global_numpy_rng(make_sim):
+def test_lidar_draws_from_the_global_numpy_rng(make_sim, requires_rendering):
     """`LidarSim.scan` samples its 15000 points with `np.random.choice` and adds noise with
     `np.random.normal` - the *global* legacy RandomState, not a stream of its own.
 

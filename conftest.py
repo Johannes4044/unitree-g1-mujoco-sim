@@ -62,6 +62,85 @@ HOLOSOMA_ONNX = SRC / "g1" / "wbc" / "models" / "holosoma" / "fastsac_g1_29dof.o
 # scenario that stops being built should fail the suite, not quietly leave it with four.
 SCENARIOS = ("warehouse_aisle", "rubble_yard", "pick_place_table", "cluttered_bench", "house_rooms")
 
+# --- can this machine render at all? ----------------------------------------------------
+# Probed once per session, because some machines cannot: GitHub's macos-14 runners have no
+# display and MuJoCo's CGL backend raises `CGLError: invalid pixel format` on every
+# `Renderer`, and a headless Linux box without the Mesa/EGL packages fails differently.
+#
+# The probe is deliberately narrow. `mujoco.Renderer.__init__` is where the GL context is
+# created (`gl_context.GLContext(...)` then `MjrContext`), so a failure *there* is the only
+# thing treated as "this machine cannot render", and it is the only thing that skips. Once a
+# context exists, everything afterwards - a render that raises, or one that returns the wrong
+# shape or dtype - is a real defect and must reach the tests that assert it. Otherwise the
+# probe would quietly swallow exactly the regressions the suite exists to catch.
+FORCE_NO_GL = "G1_TEST_FORCE_NO_GL"
+# The smallest possible scene: one geom, one camera, 16x16. Nothing about the G1.
+_PROBE_XML = """<mujoco><worldbody>
+  <geom name="g" type="sphere" size="1"/>
+  <camera name="c" pos="0 -4 0" xyaxes="1 0 0 0 0 1"/>
+</worldbody></mujoco>"""
+_probe_result: tuple[bool, str | None] | None = None
+
+
+def _probe_rendering() -> tuple[bool, str | None]:
+    """(can_render, reason_it_cannot). Only a failure to create the GL context says False."""
+    forced = os.environ.get(FORCE_NO_GL, "").strip()
+    if forced and forced != "0":
+        return False, (f"${FORCE_NO_GL} is set: the skip path is being exercised deliberately, "
+                       "no GL context was attempted")
+
+    import mujoco
+
+    model = mujoco.MjModel.from_xml_string(_PROBE_XML)
+    data = mujoco.MjData(model)
+    mujoco.mj_forward(model, data)
+    try:
+        renderer = mujoco.Renderer(model, 16, 16)
+    except Exception as exc:  # noqa: BLE001 - see below
+        # Broad on purpose. CGLError on a display-less mac, OSError/RuntimeError/ImportError
+        # for a missing EGL or OSMesa library on Linux, and MuJoCo validates $MUJOCO_GL at
+        # import time, so the set of things that can come out of here is not enumerable. The
+        # alternative to catching broadly is the whole session erroring out, which tells
+        # whoever reads the log strictly less.
+        return False, (f"no GL context could be created ({type(exc).__module__}."
+                       f"{type(exc).__name__}: {str(exc).strip() or 'no detail'})")
+    try:
+        renderer.update_scene(data, camera="c")
+        renderer.render()
+    except Exception:  # noqa: BLE001 - a drawing failure is not a capability question
+        # A context exists but drawing through it failed. Not a capability question any more:
+        # let the real tests run and report it.
+        return True, None
+    finally:
+        renderer.close()
+    return True, None
+
+
+def rendering_probe() -> tuple[bool, str | None]:
+    global _probe_result
+    if _probe_result is None:
+        _probe_result = _probe_rendering()
+    return _probe_result
+
+
+@pytest.fixture(scope="session")
+def rendering_available() -> bool:
+    return rendering_probe()[0]
+
+
+@pytest.fixture
+def requires_rendering():
+    """Skip the test when this machine has no usable GL context.
+
+    Use it on anything that calls `rgb()`, `depth()` or `lidar()`. The reason text is written
+    for whoever is reading a CI log and has to decide whether the robot is broken: it is not.
+    """
+    ok, reason = rendering_probe()
+    if not ok:
+        pytest.skip(f"rendering unavailable - {reason}. Physics, the RobotSource contract, "
+                    "the 31-slot layout, the safety refusals and seeding all still ran; only "
+                    "camera, depth and LiDAR coverage is missing from this run.")
+
 
 def built_scenario(name: str) -> Path:
     return BUILT_SCENARIOS / f"{name}.xml"
@@ -87,6 +166,11 @@ def pytest_report_header() -> list[str]:
             "works outside it: run `python -c 'import g1'` before trusting a green run. "
             "(Seen on macOS when every site-packages .pth file carries the UF_HIDDEN flag, "
             "which CPython >= 3.11 skips, leaving an editable install inert.)")
+    ok, reason = rendering_probe()
+    lines.append(f"rendering: {'available' if ok else f'UNAVAILABLE - {reason}'}")
+    if not ok:
+        lines.append("rendering: camera, depth and LiDAR tests will be SKIPPED; physics, the "
+                     "RobotSource contract, the layout and the safety refusals are unaffected")
     return lines
 
 
