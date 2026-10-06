@@ -68,7 +68,15 @@ def built_scenario(name: str) -> Path:
 
 
 def pytest_report_header() -> list[str]:
-    """Say which `g1` is under test, and say so loudly when it is not the installed one."""
+    """Say which `g1` is under test, and say so loudly when it is not the installed one.
+
+    The path alone cannot tell you which it is, and that is not a defect to be fixed: an
+    *editable* install puts `src/` on `sys.path` through its `.pth` file, so a perfectly
+    healthy `uv sync` also reports `<repo>/src/g1/__init__.py` - byte-identical to what the
+    fallback below reports. `USING_PATH_FALLBACK` is the only signal that distinguishes them.
+    So do not "harden" this by asserting the path contains `site-packages`: that holds for a
+    non-editable install only, and would fail every normal development checkout.
+    """
     import g1
 
     lines = [f"g1: {Path(g1.__file__).resolve()}"]
