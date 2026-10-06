@@ -3,14 +3,14 @@ name: CI
 # What this workflow is for, in one line each:
 #
 #   lint        - ruff, gating everything but the two inherited-debt directories
-#   test        - the fast test set, on every push, two interpreter legs
+#   test        - the fast test set, on every push, three OS/interpreter legs
 #   test-full   - the whole suite including the slow rendering tests, Linux only
 #   cold start  - the actual promise of this repo: clone, install, 5/5 scenarios OK
 #
 # Rendering is verified on Linux only. A GitHub-hosted macOS runner cannot create a
 # GL context at all (CGLError: invalid pixel format - no window server session), so
-# every macOS job here is physics-only. That is a runner limitation: rendering works
-# on real Apple Silicon. Details at the macos-14 notes below.
+# the macOS legs run physics and skip rendering. That is a runner limitation:
+# rendering works on real Apple Silicon. Details at the macos-14 notes below.
 #
 # Platform constraint that drives the whole matrix (verified against PyPI):
 #
@@ -65,8 +65,15 @@ jobs:
       # [tool.ruff], so new code anywhere - src/, tests/, conftest.py, .github/ -
       # is gated the moment it appears, and nothing about the ruff config is
       # weakened. Delete the excludes once scripts/ and workspace/ are clean.
-      - name: ruff check (gate - all but scripts/ and workspace/)
-        run: uv run ruff check . --exclude scripts --exclude workspace
+      #
+      # The `./` prefixes are load-bearing. A ruff exclude pattern with no path
+      # separator is matched against the BASENAME, so a bare `--exclude scripts`
+      # also excludes `.github/scripts/` - which silently left this workflow's own
+      # Python ungated, and did so while reporting "All checks passed". Measured:
+      # `ruff check .github --exclude=scripts` prints "No Python files found".
+      # Anchoring to `./scripts` excludes the top-level directory only.
+      - name: ruff check (gate - all but ./scripts and ./workspace)
+        run: uv run ruff check . --exclude=./scripts --exclude=./workspace
 
       # The inherited findings.
       #
@@ -116,23 +123,24 @@ jobs:
             python: "3.11"
           - os: ubuntu-24.04
             python: "3.13"
-          # There is no macos-14 leg here, and that is a measured runner limitation,
-          # not an oversight. A GitHub-hosted macOS runner has no window server
-          # session, so CGLChoosePixelFormat fails with "invalid pixel format" and
-          # every render dies - on real Apple Silicon the same code renders fine
-          # (verified locally). The rendering tests live in the FAST set, not behind
-          # the `slow` marker, so there is no marker expression that would skip them:
-          # the first run of this workflow on macos-14 was 140 passed, 26 failed,
-          # 10 errors, every failure a CGLError from rgb()/depth()/lidar().
+          # macos-14 is arm64, which is the only macOS that can install this at all.
+          # It runs the same command as the Linux legs and is expected to SKIP rather
+          # than fail the rendering tests: a GitHub-hosted macOS runner has no window
+          # server session, so CGLChoosePixelFormat fails with "invalid pixel format"
+          # and no GL context can be created. conftest.py probes for one once per
+          # session and skips the camera/depth/LiDAR tests when it is absent, so the
+          # physics, the RobotSource contract, the 31-slot layout, the safety refusals
+          # and seeding all still run here. Measured expectation: ~139 passed, ~40
+          # skipped, 0 failed. Reproduce it on Linux with G1_TEST_FORCE_NO_GL=1.
           #
-          # macOS is still covered, by `cold start (uv, macos-14)` below: it proves
-          # the arm64 wheels install and that physics and state() work, which is the
-          # part of the platform CI can actually speak to.
-          #
-          # To restore this leg: have the test suite skip rendering tests when no GL
-          # context can be created (a `render` marker, or an autouse skip that tries
-          # mujoco.Renderer once per session), then run
-          # `pytest -m "not slow and not render"` here.
+          # Before that probe existed this leg was 140 passed / 26 failed / 10 errors,
+          # every failure a CGLError out of rgb()/depth()/lidar(). If it goes back to
+          # failing rather than skipping, the probe has stopped working - it is
+          # deliberately narrow, treating only a failure to *construct*
+          # mujoco.Renderer as "cannot render", so a real rendering regression still
+          # fails loudly on a machine that can render.
+          - os: macos-14
+            python: "3.11"
     steps:
       - uses: actions/checkout@v5.1.0
 

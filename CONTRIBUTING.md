@@ -38,7 +38,8 @@ they are not preferences:
   set it workflow-wide in cross-platform CI.
 - **A GitHub-hosted macOS runner cannot render at all.** It has no window server
   session, so CGL fails with `invalid pixel format`. This is a CI limitation only —
-  rendering works on a real Mac. It is why the macOS CI jobs are physics-only.
+  rendering works on a real Mac. The test suite skips rendering tests when no context
+  can be created; the macOS cold-start job is physics-only for the same reason.
 
 ## Run the tests and the linter
 
@@ -46,7 +47,7 @@ they are not preferences:
 uv run pytest                 # the fast set - the default, and what CI gates on
 uv run pytest -m slow         # only the slow set: rendering and long rollouts
 uv run pytest -m ""           # everything
-uv run ruff check . --exclude scripts --exclude workspace   # the lint gate
+uv run ruff check . --exclude=./scripts --exclude=./workspace   # the lint gate
 ```
 
 `pyproject.toml` sets `addopts = "-m 'not slow' --strict-markers"`, which is why a
@@ -72,7 +73,14 @@ seen the number "6" quoted for this tree, that is the `scripts/` subset under
 
 So the count is a function of the ruff version, `pyproject.toml` asks only for
 `ruff>=0.5`, and a hard gate on `ruff check .` could therefore go red on a day
-nobody touched the code. CI therefore gates on
+nobody touched the code. The *gated* set, by contrast, is clean under 0.13.3,
+0.15.0, 0.16.0 and 0.16.10 — so the gate does not move when ruff does; only the
+advisory full-tree count does.
+
+The `./` prefixes on the excludes are load-bearing. A ruff exclude pattern with no
+path separator is matched against the **basename**, so a bare `--exclude scripts`
+also excludes `.github/scripts/` — and reports "All checks passed" while doing it.
+Anchor them, or the gate quietly stops covering what you think it covers. CI therefore gates on
 the tree *minus those two directories*, which means new code anywhere — `src/`,
 `tests/`, `conftest.py` — is gated from the moment it appears, and separately runs
 `ruff check .` as an advisory step so the baseline stays visible. The excludes live
@@ -161,10 +169,13 @@ it any time.
   cold start from a clone on Linux (both documented install paths, through to
   `5/5 scenarios OK`) and on arm64 macOS (physics only — that runner cannot render).
   The cold start is the promise of this repo; if it goes red, nothing else matters.
-- If you add tests that render, note that they currently sit in the *fast* set, which
-  is why there is no macOS pytest leg. A `render` marker, or an autouse skip when no
-  GL context can be created, would let one be added back — and would also help anyone
-  working on a Mac over SSH, where CGL fails the same way it does on the runner.
+- Tests that render are in the *fast* set, and `conftest.py` probes once per session
+  for a GL context and skips them when there is none. So the macOS CI leg passes by
+  skipping (~139 passed, ~40 skipped) rather than failing, and so does a Mac over SSH
+  or a container without Mesa. `G1_TEST_FORCE_NO_GL=1 pytest` reproduces that path on
+  a machine that *can* render. The probe treats only a failure to **construct**
+  `mujoco.Renderer` as "cannot render", so a genuine rendering regression still fails
+  loudly wherever rendering is possible.
 
 ## Reporting a problem
 
