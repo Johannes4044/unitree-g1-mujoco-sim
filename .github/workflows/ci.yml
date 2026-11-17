@@ -10,7 +10,7 @@ name: CI
 # Rendering is verified on Linux only. A GitHub-hosted macOS runner cannot create a
 # GL context at all (CGLError: invalid pixel format - no window server session), so
 # the macOS legs run physics and skip rendering. That is a runner limitation:
-# rendering works on real Apple Silicon. Details at the macos-14 notes below.
+# rendering works on real Apple Silicon. Details at the macOS notes below.
 #
 # Platform constraint that drives the whole matrix (verified against PyPI):
 #
@@ -19,10 +19,10 @@ name: CI
 #
 #   There is no Intel-macOS wheel for either package, so `macos-13` - which is an
 #   Intel runner - cannot install this repo at all and must never be added to a
-#   matrix here. Every macOS leg uses `macos-14`, which is Apple Silicon and whose
-#   OS version is exactly the floor onnxruntime requires. macos-15 / macos-latest
-#   are also arm64 and would work; macos-14 is pinned because it is the oldest
-#   configuration docs/INSTALL.md claims to support, so it is the one worth testing.
+#   matrix here. Every macOS leg uses `macos-15`, which is Apple Silicon. It was
+#   `macos-14` (exactly onnxruntime's floor, the oldest configuration docs/INSTALL.md
+#   claims) until GitHub retired that image in Nov 2026 - jobs on it fail in 1 s with
+#   "configuration ... is not supported". macOS 14 is now claimed but untested in CI.
 #
 # MUJOCO_GL is deliberately NOT set at workflow or job level: MuJoCo validates it at
 # `import mujoco` and 'egl'/'osmesa' are Linux-only values that raise under Darwin,
@@ -127,7 +127,7 @@ jobs:
         # Three legs, chosen so each one can fail for its own reason:
         #   ubuntu/3.11  - the floor declared by requires-python
         #   ubuntu/3.13  - the newest interpreter all five deps ship wheels for
-        #   macos-14     - arm64, i.e. the only macOS that can install this at all
+        #   macos-15     - arm64, i.e. the only macOS that can install this at all
         # Not a full OS x Python fan-out: the deps are pure prebuilt wheels and the
         # code is pure Python, so the interesting axes are "oldest/newest Python"
         # and "is there a GL context", not the cross product.
@@ -136,7 +136,7 @@ jobs:
             python: "3.11"
           - os: ubuntu-24.04
             python: "3.13"
-          # macos-14 is arm64, which is the only macOS that can install this at all.
+          # macos-15 is arm64, which is the only macOS that can install this at all.
           # It runs the same command as the Linux legs and is expected to SKIP rather
           # than fail the rendering tests: a GitHub-hosted macOS runner has no window
           # server session, so CGLChoosePixelFormat fails with "invalid pixel format"
@@ -152,7 +152,7 @@ jobs:
           # deliberately narrow, treating only a failure to *construct*
           # mujoco.Renderer as "cannot render", so a real rendering regression still
           # fails loudly on a machine that can render.
-          - os: macos-14
+          - os: macos-15
             python: "3.11"
     steps:
       - uses: actions/checkout@v5.1.0
@@ -204,7 +204,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-24.04, macos-14]
+        os: [ubuntu-24.04, macos-15]
     steps:
       - uses: actions/checkout@v5.1.0
 
