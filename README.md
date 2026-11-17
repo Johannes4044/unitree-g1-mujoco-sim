@@ -56,6 +56,7 @@ six commented examples that are the actual point of this repo.
 | `g1.robot` | `RobotSource` — the one interface the simulator and a real robot both implement: `state()`, `rgb()`, `depth()`, `lidar()`, `set_joint_targets()`, `set_base_velocity()`. `SimSource` is the MuJoCo implementation; `lidar.py` is the Mid-360 model. |
 | `g1.wbc` | Whole-body controllers: what turns a base velocity command into leg joint targets. `kinematic` (a non-physical stand-in, the default), `holosoma` (a real pretrained locomotion policy, ONNX on CPU), `pd_stand`. |
 | `workspace/` | **Start here.** Six runnable examples and a guided tour of the above. |
+| `lab/` | **On the real robot.** Read state, move one arm joint, rehearse against a fake robot. Own dependencies (Unitree SDK, Python 3.10). |
 | `scripts/` | Build the scene, build and check the scenarios, render, smoke-test. |
 
 ## What this is not
@@ -64,10 +65,11 @@ six commented examples that are the actual point of this repo.
 - **No training pipeline.** No torch, no lerobot, no dataset tooling. Example 06 records
   episodes into plain `.npz` + `.json`; converting those to a training format is a separate
   job in a separate environment.
-- **No real-robot drivers.** `g1.robot.real_source.RealSource` is the seam where a real G1
-  would attach — it documents the DDS topics, the RealSense pipelines and the SLAM
-  subscriptions it would need, and it raises `NotImplementedError` in its constructor. It is
-  not exercised here and nothing in this repo has been validated on hardware.
+- **No real-robot drivers in `g1`.** `g1.robot.real_source.RealSource` is the seam where a
+  real G1 would attach — it documents the DDS topics, the RealSense pipelines and the SLAM
+  subscriptions it would need, and it raises `NotImplementedError` in its constructor. The
+  first hardware steps live apart from it, in [`lab/`](lab/README.md): reading the robot's
+  state and one gated arm motion over Unitree's SDK, plus the plan for the first lab day.
 - **No teacher.** The simulator will happily let you measure a number that means nothing. The
   `kinematic` controller in particular is arithmetic, not locomotion; `controller_caps()`
   reports `stand_in: True` for it and you should believe it.
